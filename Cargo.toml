@@ -1,0 +1,15 @@
+[package]
+name = "printers"
+version = "0.1.0"
+authors = ["Tales Luna <tales.ferreira.luna@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+#uuid = "0.8"
+uuid = { version = "0.8", features = ["v4", "v5"] }
+
+
+[lib]
+bench = false
+path = "src/lib.rs"
+name = "printers"
