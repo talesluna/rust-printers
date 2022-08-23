@@ -1,9 +1,15 @@
+
 use std::env;
 use std::fs::File;
 use std::io::Write;
 
 use uuid::Uuid;
 
+
+/**
+ * Job is a result of an priting execution
+ * When status is JobStatus::Failed, has too a error as String
+ */
 #[derive(Debug)]
 pub struct Job {
     pub status: JobStatus,
@@ -11,17 +17,42 @@ pub struct Job {
     pub file_path: String,
 }
 
+
+/**
+ * Enum of possible status of printing execution
+ */
 #[derive(Debug)]
 pub enum JobStatus {
     SUCCESS,
     FAILED,
 }
 
+/**
+ * Printer is a struct to representation the system printer
+ * They has an ID composed by your system_name and has printing method to print directly
+ */
 pub struct Printer {
+
+    /**
+     * Uuid v5 of system_name with DNS namespace
+     */
     pub id: String,
+
+    /**
+     * Visual reference of system printer name
+     */
     pub name: String,
+
+    /**
+     * Name of Printer exactly as on system 
+     */
     pub system_name: String,
+
+    /**
+     * A private reference of print command executor
+     */
     exec: &'static dyn Fn(&str, &str) -> Result<bool, String>,
+
 }
 
 impl std::fmt::Debug for Printer {
@@ -41,8 +72,12 @@ impl Clone for Printer {
     }
 }
 
+
 impl Printer {
 
+    /**
+     * Creates a new `Printer`
+     */
     pub fn new(
         name: String,
         system_name: String,
@@ -58,7 +93,7 @@ impl Printer {
 
 
     /**
-     * Print bytes into self printer instnace
+     * Print bytes with self printer instnace
      */
     pub fn print(&self, buffer: &[u8]) -> Job {
 
@@ -81,7 +116,7 @@ impl Printer {
 
 
     /**
-     * Print specific file into self printer instnace
+     * Print specific file with self printer instnace
      */
     pub fn print_file(&self, file_path: &str) -> Job {
         return _print(&self.system_name, file_path, &self.exec);
