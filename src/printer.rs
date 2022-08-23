@@ -30,6 +30,17 @@ impl std::fmt::Debug for Printer {
     }
 }
 
+impl Clone for Printer {
+    fn clone(&self) -> Printer {
+        return Printer {
+            id: self.id.clone(),
+            name: self.name.clone(),
+            system_name: self.name.clone(),
+            exec: self.exec.clone()
+        }
+    }
+}
+
 impl Printer {
 
     pub fn new(
