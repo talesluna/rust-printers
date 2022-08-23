@@ -1,6 +1,6 @@
 [package]
 name = "printers"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Tales Luna <tales.ferreira.luna@gmail.com>"]
 edition = "2018"
 license-file = "LICENSE"
