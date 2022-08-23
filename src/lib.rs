@@ -32,4 +32,3 @@ pub fn get_printers() -> Vec<printer::Printer> {
 
     panic!("Unsupported OS");
 }
-

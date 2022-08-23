@@ -30,11 +30,7 @@ pub fn get_printers() -> Vec<printer::Printer> {
                 let name = String::from(printer_data[1]);
                 let system_name = String::from(printer_data[0]);
 
-                let executor = Box::new(|printer_system_name: &str, file_path: &str| {
-                    self::print(printer_system_name, file_path)
-                });
-
-                printers.push(printer::Printer::new(name, system_name, executor));
+                printers.push(printer::Printer::new(name, system_name,  &self::print));
 
             }
 
