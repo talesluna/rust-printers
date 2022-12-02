@@ -66,8 +66,8 @@ impl Clone for Printer {
         return Printer {
             id: self.id.clone(),
             name: self.name.clone(),
-            system_name: self.name.clone(),
-            exec: self.exec.clone()
+            exec: self.exec.clone(),
+            system_name: self.system_name.clone(),
         }
     }
 }

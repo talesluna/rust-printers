@@ -9,7 +9,7 @@ use crate::process;
 pub fn get_printers() -> Vec<printer::Printer> {
 
     let result = process::exec(
-        Command::new("wmic").arg("printer").arg("get").arg("DriverName, Name")
+        Command::new("wmic").arg("printer").arg("get").arg("DriverName,Name")
     );
 
     if result.is_ok() {
