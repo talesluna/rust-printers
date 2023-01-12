@@ -26,8 +26,8 @@ pub enum JobStatus {
 #[derive(Debug, Clone)]
 pub struct PrinterOption(String);
 impl PrinterOption {
-    pub fn new(opt: String) -> Self {
-        PrinterOption(opt)
+    pub fn new(opt: &str) -> Self {
+        PrinterOption(opt.to_string())
     }
     pub fn to_str(&self) -> &str {
         self.0.as_str()
