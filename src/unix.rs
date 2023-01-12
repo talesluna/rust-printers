@@ -1,6 +1,7 @@
 use std::process::Command;    
 
 use crate::printer;
+use crate::printer::PrinterOption;
 use crate::process;
 
 /**
@@ -10,18 +11,17 @@ pub fn get_printers() -> Vec<printer::Printer> {
 
     let result = process::exec(Command::new("lpstat").arg("-e"));
 
-    if result.is_ok() {
+    if let Ok(out_str) = result {
 
-        let out_str = result.unwrap();
-        let lines: Vec<&str> = out_str.split_inclusive("\n").collect();
+        let lines: Vec<&str> = out_str.split_inclusive('\n').collect();
         let mut printers: Vec<printer::Printer> = Vec::with_capacity(lines.len());
 
         for line in lines {
 
-            let system_name = line.replace("\n", "");
-            let name = String::from(system_name.replace("_", " ").trim());
-
-            printers.push(printer::Printer::new(name, system_name, &self::print));
+            let system_name = line.replace('\n', "");
+            let name = String::from(system_name.replace('_', " ").trim());
+            let options = Vec::new();
+            printers.push(printer::Printer::new(name, system_name, options, &self::print));
 
         }
 
@@ -29,7 +29,7 @@ pub fn get_printers() -> Vec<printer::Printer> {
 
     }
         
-    return Vec::with_capacity(0);
+    Vec::with_capacity(0)
 
 }
 
@@ -37,16 +37,19 @@ pub fn get_printers() -> Vec<printer::Printer> {
 /**
  * Print on unix systems using lp
  */
-pub fn print(printer_system_name: &str, file_path: &str) -> Result<bool, String> {
+pub fn print(printer_system_name: &str, file_path: &str, options: &[PrinterOption]) -> Result<bool, String> {
 
-    let result = process::exec(
-        Command::new("lp").arg("-d").arg(printer_system_name).arg(file_path)
-    );
+    let mut cmd = Command::new("lp");
+    cmd.arg("-d").arg(printer_system_name).arg(file_path);
 
-    if result.is_err() {
-        return Result::Err(result.unwrap_err());
+    for option in options.iter(){
+        cmd.arg("-o").arg(option.to_str());
+    }
+    let result = process::exec(&mut cmd);
+
+    if let Err(error) = result {
+        return Result::Err(error);
     }
 
-    return Result::Ok(true)
-
+    Result::Ok(true)
 }

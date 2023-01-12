@@ -30,7 +30,7 @@ pub mod printer;
  * Print bytes on specific printer
  */
 pub fn print(printer: &printer::Printer, buffer: &[u8]) -> printer::Job {
-    return printer.print(buffer);
+    printer.print(buffer)
 }
 
 
@@ -38,7 +38,7 @@ pub fn print(printer: &printer::Printer, buffer: &[u8]) -> printer::Job {
  * Print specific file on a specific printer
  */
 pub fn print_file(printer: &printer::Printer, file_path: &str) -> printer::Job {
-    return printer.print_file(file_path);
+    printer.print_file(file_path)
 }
 
 
@@ -65,10 +65,10 @@ pub fn get_printer_by_id(id: &str) -> Option<printer::Printer> {
     let printers = get_printers();
 
     let opt = printers.iter().find(|&printer| {
-        return printer.clone().id.eq(id)
+        printer.clone().id.eq(id)
     });
 
-    return opt.cloned();
+    opt.cloned()
 }
 
 
@@ -80,8 +80,8 @@ pub fn get_printer_by_name(name: &str) -> Option<printer::Printer> {
     let printers = get_printers();
 
     let opt = printers.iter().find(|&printer| {
-        return printer.clone().name.eq(name) || printer.clone().system_name.eq(name)
+        printer.clone().name.eq(name) || printer.clone().system_name.eq(name)
     });
 
-    return opt.cloned();
+    opt.cloned()
 }

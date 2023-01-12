@@ -1,6 +1,7 @@
 use std::process::Command;
 
 use crate::printer;
+use crate::printer::PrinterOption;
 use crate::process;
 
 /**
@@ -12,10 +13,9 @@ pub fn get_printers() -> Vec<printer::Printer> {
         Command::new("wmic").arg("printer").arg("get").arg("DriverName,Name")
     );
 
-    if result.is_ok() {
+    if let Ok(out_str) = result {
 
-        let out_str = result.unwrap();
-        let mut lines: Vec<&str> = out_str.split_inclusive("\n").collect();
+        let mut lines: Vec<&str> = out_str.split_inclusive('\n').collect();
         lines.remove(0);
 
         let mut printers: Vec<printer::Printer> = Vec::with_capacity(lines.len());
@@ -26,8 +26,9 @@ pub fn get_printers() -> Vec<printer::Printer> {
 
             let name = String::from(printer_data[1]);
             let system_name = String::from(printer_data[0]);
+            let options = Vec::new();
 
-            printers.push(printer::Printer::new(name, system_name,  &self::print));
+            printers.push(printer::Printer::new(name, system_name,  options, &self::print));
 
         }
 
@@ -35,7 +36,7 @@ pub fn get_printers() -> Vec<printer::Printer> {
 
     }
 
-    return Vec::with_capacity(0);
+    Vec::with_capacity(0)
 
 }
 
@@ -43,16 +44,21 @@ pub fn get_printers() -> Vec<printer::Printer> {
 /**
  * Print on windows using lpr
  */
-pub fn print(printer_system_name: &str, file_path: &str) -> Result<bool, String> {
+pub fn print(printer_system_name: &str, file_path: &str, options: &[PrinterOption]) -> Result<bool, String> {
 
-    let process = process::exec(
-        Command::new("lpr").arg("-S 127.0.0.1").arg("-P").arg(printer_system_name).arg(file_path)
-    );
+    let mut cmd = Command::new("lpr");
+    cmd.arg("-S 127.0.0.1").arg("-P").arg(printer_system_name).arg(file_path);
+    
+    for option in options.iter(){
+        cmd.arg("-o").arg(option.to_str());
+    }
+    
+    let process = process::exec(&mut cmd);
 
-    if process.is_err() {
-        return Result::Err(process.unwrap_err());
+    if let Err(err) = process {
+        return Result::Err(err);
     }
 
-    return Result::Ok(true);
+    Result::Ok(true)
 
 }
