@@ -26,6 +26,9 @@ pub enum JobStatus {
 #[derive(Debug, Clone)]
 pub struct PrinterOption(String);
 impl PrinterOption {
+    pub fn new(opt: String) -> Self {
+        PrinterOption(opt)
+    }
     pub fn to_str(&self) -> &str {
         self.0.as_str()
     }
@@ -132,6 +135,14 @@ impl Printer {
      */
     pub fn print_file(&self, file_path: &str) -> Job {
         _print(&self.system_name, file_path, &self.options, &self.exec)
+    }
+
+    pub fn set_options(&mut self, options: Vec<PrinterOption>) {
+        self.options = options;
+    }
+
+    pub fn add_option(&mut self, option: PrinterOption) {
+        self.options.push(option);
     }
 }
 
