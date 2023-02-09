@@ -1,6 +1,6 @@
 # Printers
 
-Printers **is not a lib for printer drivers or cups**. Printers is a simple lib for running "native" printing commands in unix *(lp/lpstat)* and windows *(lpr/wmic)* systems.
+Printers **is not a lib for printer drivers or cups**. Printers is a simple lib for running "native" printing commands in unix *(lp/lpstat)* and windows *(powershell utilities)* systems.
 
 Printer can provide a list of printers available on the system and perform document printing.
 
@@ -76,7 +76,7 @@ fn main() {
 ## System Requiriments
 
 ### Windows / LPD
-For Windows is necessary turn on LPR and LPD running on localhost to perform lpr command to print
+For Windows is necessary powershell installed
 
 ### Unix / Cups
 For Unix is necessary cups service running to perform lp command to print
