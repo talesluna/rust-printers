@@ -6,9 +6,9 @@ use std::process::Command;
 pub fn exec(command: &mut Command) -> Result<String, String> {
     let out = command.output();
 
-    if out.is_err() {
-        return Result::Err(out.unwrap_err().to_string());
+    if let Err(error) = out {
+        return Result::Err(error.to_string());
     }
 
-    return Result::Ok(String::from_utf8(out.unwrap().stdout).unwrap());
+    Result::Ok(String::from_utf8(out.unwrap().stdout).unwrap())
 }
