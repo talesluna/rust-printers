@@ -49,6 +49,11 @@ pub struct Printer {
     pub system_name: String,
 
     /**
+     * Name of printer driver on system
+     */
+    pub driver_name: String,
+
+    /**
      * A private reference of print command executor
      */
     exec: &'static dyn Fn(&str, &str) -> Result<bool, String>,
@@ -57,7 +62,7 @@ pub struct Printer {
 
 impl std::fmt::Debug for Printer {
     fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(fmt, "Printer {{ id: {:?}, name: {:?}, system_name: {:?} }}", self.id, self.name, self.system_name)
+        write!(fmt, "Printer {{ id: {:?}, name: {:?}, system_name: {:?}, driver_name: {:?} }}", self.id, self.name, self.system_name, self.driver_name)
     }
 }
 
@@ -68,6 +73,7 @@ impl Clone for Printer {
             name: self.name.clone(),
             exec: self.exec.clone(),
             system_name: self.system_name.clone(),
+            driver_name: self.driver_name.clone(),
         }
     }
 }
@@ -81,12 +87,14 @@ impl Printer {
     pub fn new(
         name: String,
         system_name: String,
+        driver_name: String,
         exec: &'static dyn Fn(&str, &str)-> Result<bool, String>,
     ) -> Printer {
         Printer {
             id: Uuid::new_v5(&Uuid::NAMESPACE_DNS, system_name.as_bytes()).to_string(),
             name,
             system_name,
+            driver_name,
             exec,
         }
     }

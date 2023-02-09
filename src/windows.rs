@@ -1,58 +1,61 @@
 use std::process::Command;
+use std::str;
 
 use crate::printer;
-use crate::process;
 
 /**
  * Get printers on windows using wmic
  */
 pub fn get_printers() -> Vec<printer::Printer> {
+    let command = Command::new("powershell")
+        .arg("-Command")
+        .arg("Get-Printer | Format-List Name,DriverName")
+        .output()
+        .unwrap();
 
-    let result = process::exec(
-        Command::new("wmic").arg("printer").arg("get").arg("DriverName,Name")
-    );
-
-    if result.is_ok() {
-
-        let out_str = result.unwrap();
-        let mut lines: Vec<&str> = out_str.split_inclusive("\n").collect();
-        lines.remove(0);
+    if command.status.success() {
+        let out_str = str::from_utf8(&command.stdout).unwrap();
+        let lines: Vec<Vec<&str>> = out_str
+            .trim()
+            .split("\r\n\r\n")
+            .map(|l| l.split("\r\n").collect())
+            .collect();
 
         let mut printers: Vec<printer::Printer> = Vec::with_capacity(lines.len());
 
         for line in lines {
-            
-            let printer_data: Vec<&str> = line.split_ascii_whitespace().collect();
+            let name = line[0].split(":").last().unwrap().trim();
+            let driver_name = line[1].split(":").last().unwrap().trim();
 
-            let name = String::from(printer_data[1]);
-            let system_name = String::from(printer_data[0]);
-
-            printers.push(printer::Printer::new(name, system_name,  &self::print));
-
+            printers.push(printer::Printer::new(
+                name.to_string(),
+                name.to_string(),
+                driver_name.to_string(),
+                &self::print,
+            ));
         }
 
         return printers;
-
     }
 
     return Vec::with_capacity(0);
-
 }
-
 
 /**
  * Print on windows using lpr
  */
 pub fn print(printer_system_name: &str, file_path: &str) -> Result<bool, String> {
+    let child = Command::new("powershell")
+        .arg(format!(
+            "Get-Content -Path \"{}\" |  Out-Printer -Name \"{}\"",
+            file_path, printer_system_name
+        ))
+        .spawn()
+        .unwrap();
 
-    let process = process::exec(
-        Command::new("lpr").arg("-S 127.0.0.1").arg("-P").arg(printer_system_name).arg(file_path)
-    );
-
-    if process.is_err() {
-        return Result::Err(process.unwrap_err());
+    if child.id() > 0 {
+        return Result::Ok(true);
     }
 
-    return Result::Ok(true);
-
+    return Result::Err("Failure to start print process".to_string());
 }

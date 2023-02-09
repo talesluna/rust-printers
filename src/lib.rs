@@ -21,7 +21,6 @@
 //! 
 mod unix;
 mod windows;
-mod process;
 
 /// Printer and Job control
 pub mod printer;
