@@ -63,7 +63,7 @@ fn main() {
     printers::print_file(&printers[1], "/path/to/any.file");
 
     // Try get printer by uuid
-    let test_printer = printers::get_printer_by_name("4be0643f-1d98-573b-97cd-ca98a65347dd");
+    let test_printer = printers::get_printer_by_id("4be0643f-1d98-573b-97cd-ca98a65347dd");
     println!("{:?}", test_printer);
 
     // Try printer by name
@@ -80,17 +80,3 @@ For Windows is necessary powershell installed
 
 ### Unix
 For Unix is necessary cups service running to perform lp command to print
-
-
-## Contributors
-
-<table>
-<tr>
-<td><img width="80" src="https://avatars.githubusercontent.com/u/104795424?v=4&s=80"/></td>
-<td><img width="80" src="https://avatars.githubusercontent.com/u/38390225?v=4&s=80"/></td>
-<td><img width="80" src="https://avatars.githubusercontent.com/u/2058205?v=4&s=80"/></td>
-<td><img width="80" src="https://avatars.githubusercontent.com/u/20155974?v=4&s=80"/></td>
-<td><img width="80" src="https://avatars.githubusercontent.com/u/40415260?v=4&s=80"/></td>
-</tr>
-</table>
-
