@@ -1,6 +1,8 @@
 use libc::{c_char, c_int};
 use std::{ffi::{CStr, CString}, ptr};
 
+use crate::shared::interface::PlatformPrinterGetters;
+
 /**
  * The CUPS option struct (cups_option_s)
  * https://www.cups.org/doc/cupspm.html#cups_option_s
@@ -30,24 +32,6 @@ pub struct CupsDestT {
  * Implements getters for the cups_dest_s struct
  */
 impl CupsDestT {
-    /**
-     * Returns the name of the destionation
-     */
-    pub fn get_name(&self) -> String {
-        if self.name.is_null() {
-            return "".to_string();
-        }
-
-        let c_str = unsafe { CStr::from_ptr(self.name.clone()) };
-        return c_str.to_str().unwrap().to_string();
-    }
-
-    /**
-     * Returns default destination definition
-     */
-    pub fn get_is_default(&self) -> c_int {
-        return self.is_default;
-    }
 
     /**
      * Returns a string value of an key on cups options (If the key was not found return a empty string)
@@ -71,45 +55,71 @@ impl CupsDestT {
         return value;
     }
 
+
+}
+
+impl PlatformPrinterGetters for CupsDestT {
+
+    /**
+     * Returns the name of the destionation
+     */
+    fn get_system_name(&self) -> String {
+        if self.name.is_null() {
+            return "".to_string();
+        }
+
+        let c_str = unsafe { CStr::from_ptr(self.name.clone()) };
+        return c_str.to_str().unwrap().to_string();
+    }
+
+    /**
+     * Returns default destination definition
+     */
+    fn get_is_default(&self) -> c_int {
+        return self.is_default;
+    }
+
+
     /**
      * Returns readable name of dest by "printer-info" option
      */
-    pub fn get_printer_info(&self) -> String {
+    fn get_name(&self) -> String {
         return self.get_option_by_key("printer-info");
     }
+
 
     /**
      * Returns redeable name of the dest driver by "printer-make-and-model" option
      */
-    pub fn get_marker_and_model(&self) -> String {
+    fn get_marker_and_model(&self) -> String {
         return self.get_option_by_key("printer-make-and-model");
     }
 
     /**
      * Return if the destination is being shared with other computers
      */
-    pub fn get_is_shared(&self) -> String {
+    fn get_is_shared(&self) -> String {
         return self.get_option_by_key("printer-is-shared");
     }
 
     /**
      * Return the drive version
      */
-    pub fn get_uri(&self) -> String {
+    fn get_uri(&self) -> String {
         return self.get_option_by_key("device-uri");
     }
 
     /**
      * Return the location option
      */
-    pub fn get_location(&self) -> String {
+    fn get_location(&self) -> String {
         return self.get_option_by_key("printer-location");
     }
 
     /**
      * Return the state of the CUPS printer
      */
-    pub fn get_state(&self) -> String {
+    fn get_state(&self) -> String {
         return self.get_option_by_key("printer-state");
     }
 

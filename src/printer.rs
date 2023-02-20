@@ -3,16 +3,25 @@
  */
 #[derive(Debug, Clone)]
 pub enum PrinterState {
-    // The printer is able to receive jobs
+
+    /**
+     * The printer is able to receive jobs
+     */
     READY,
 
-    // The printer is busy doing aanything
+    /**
+     * The printer is busy doing aanything
+     */
     BUSY,
 
-    // The printer is not accepting jobs
+    /**
+     * The printer is not accepting jobs
+     */
     PAUSED,
 
-    // The printer is now priting an document
+    /**
+     * The printer is now priting an document
+     */
     PRINTING,
 }
 
@@ -62,10 +71,6 @@ pub struct Printer {
      */
     pub state: PrinterState,
 
-    // /**
-    //  * A private reference of print command executor
-    //  */
-    // exec: Option<&'static dyn Fn(&str, &str) -> Result<bool, String>>,
 }
 
 impl std::fmt::Debug for Printer {
@@ -126,28 +131,3 @@ impl Printer {
         return crate::print_file(&self.system_name, file_path);
     }
 }
-
-// /**
-//  * General printer function - process any result into Job with status
-//  */
-// fn _print(
-//     printer_system_name: &str,
-//     file_path: &str,
-//     exec: &&'static dyn Fn(&str, &str) -> Result<bool, String>,
-// ) -> JobResult {
-//     let print = exec(printer_system_name, file_path);
-
-//     if print.is_err() {
-//         return JobResult {
-//             status: JobStatus::FAILED,
-//             error: print.err(),
-//             file_path: file_path.to_string(),
-//         };
-//     }
-
-//     return JobResult {
-//         status: JobStatus::SUCCESS,
-//         error: None,
-//         file_path: file_path.to_string(),
-//     };
-// }

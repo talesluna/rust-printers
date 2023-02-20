@@ -1,6 +1,6 @@
 #[cfg_attr(analyzer, allow(dead_code))]
 
-use crate::{printer, shared};
+use crate::{printer::{Printer, PrinterState}, shared::interface::PlatformPrinterGetters};
 use std::process::Command;
 
 pub mod winspool;
@@ -8,15 +8,39 @@ pub mod winspool;
 /**
  * Get printers on windows using wmic
  */
-pub fn get_printers() -> Vec<printer::Printer> {
-    return winspool::enum_printers()
-        .iter()
-        .map(|info| {
-            let name = shared::strings::string_from_wchar_t(info.pPrinterName);
-            let driver_name = shared::strings::string_from_wchar_t(info.pDriverName);
-            return printer::Printer::new(name.clone(), name.clone(), driver_name, &self::print);
-        })
-        .collect();
+pub fn get_printers() -> Vec<Printer> {
+
+    let available_printers = winspool::enum_printers();
+    let mut printers = Vec::<Printer>::new();
+
+    for printer in available_printers {
+
+        let mut state = crate::printer::PrinterState::PAUSED;
+        let cups_state = printer.get_state();
+
+        if cups_state == 0x00002000.to_string() {
+            state = PrinterState::READY;
+        }
+        if cups_state == 0x00000400.to_string() {
+            state = PrinterState::PRINTING;
+        }
+
+        printers.push(
+            Printer {
+                name: printer.get_name(),
+                system_name: printer.get_name(),
+                driver_name: printer.get_marker_and_model(),
+                location: printer.get_location(),
+                state,
+                uri: printer.get_uri(),
+                is_default: printer.get_is_default().is_positive(),
+                is_shared: printer.get_is_shared() == "true",
+            }
+        );
+    }
+
+    return printers;
+
 }
 
 /**

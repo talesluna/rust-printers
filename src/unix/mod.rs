@@ -1,6 +1,7 @@
 use std::str;
 use crate::printer::{Printer, PrinterState};
 
+
 mod cups;
 
 /**
@@ -11,7 +12,9 @@ pub fn get_printers() -> Vec<Printer> {
     let cups_dests = cups::get_dests();
     let mut printers: Vec<Printer> = vec![];
 
-    for dest in cups_dests {
+    use crate::shared::interface::PlatformPrinterGetters;
+
+    for dest in cups_dests {        
 
         let mut state = crate::printer::PrinterState::PAUSED;
         let cups_state = dest.get_state();
@@ -25,8 +28,8 @@ pub fn get_printers() -> Vec<Printer> {
 
         printers.push(
             Printer {
-                name: dest.get_printer_info(),
-                system_name: dest.get_name(),
+                name: dest.get_name(),
+                system_name: dest.get_system_name(),
                 driver_name: dest.get_marker_and_model(),
                 location: dest.get_location(),
                 state,

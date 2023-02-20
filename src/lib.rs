@@ -19,17 +19,16 @@
 //! ```
 //!
 //!
-
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[cfg(target_family = "unix")]
+// #[cfg(target_family = "unix")]
 mod unix;
 
-#[cfg_attr(rust_analyzer, allow(dead_code))]
-#[cfg(target_family = "windows")]
+// #[cfg_attr(rust_analyzer, allow(dead_code))]
+// #[cfg(target_family = "windows")]
 mod windows;
 
 /// Printer and Job control
