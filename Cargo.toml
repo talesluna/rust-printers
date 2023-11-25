@@ -1,21 +1,20 @@
 [package]
 name = "printers"
-version = "1.2.0"
+version = "2.0.0"
 authors = ["Tales Luna <tales.ferreira.luna@gmail.com>"]
 edition = "2018"
 license = "MIT"
-keywords = ["printer", "printing", "print",  "cups", "lpd"]
+keywords = ["printer", "printing", "print",  "cups", "winspool"]
 categories = ["os", "os::windows-apis", "os::linux-apis", "development-tools"]
 homepage = "https://crates.io/crates/printers"
 repository = "https://github.com/talesluna/rust-printers"
-description = "A lib to get printers and print files or bytes on unix and windows"
+description = "A lib to get printers and print files on unix and windows"
 readme = "README.md"
 
-[dependencies.uuid]
-version = "1.1.2"
-features = [ "v4", "v5" ]
+[dependencies]
+libc = "0.2"
 
 [lib]
-bench = false
-path = "src/lib.rs"
 name = "printers"
+path = "src/lib.rs"
+bench = false
