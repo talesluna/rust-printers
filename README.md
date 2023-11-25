@@ -49,17 +49,21 @@ fn main() {
     // Print directly in all printers
     for printer in printers.clone() {
 
-        let job1 = printer.print("42".as_bytes());
-        let job2 = printer.print_file("/path/to/any.file");
-
         println!("{:?}", printer);
-        println!("{:?}", job1);
-        println!("{:?}", job2);
+
+        let status1 = printer.print("42".as_bytes(), Some("Everything"));
+        println!("{:?}", status1);
+        
+        // Note: When you don't give the job_name
+        // the file path will be that name by default
+        let status2 = printer.print_file("/path/to/any.file", None);
+        println!("{:?}", status2);
+
     }
 
-    // Print with aux lib function (legacy)
-    printers::print(&printers[0], "42".as_bytes());
-    printers::print_file(&printers[1], "/path/to/any.file");
+    // Print directly by printer name
+    printers::print("printer-a", "42".as_bytes(), Some("Everything"));
+    printers::print_file("printer-b", "/path/to/any.file", Some("My Job"));
 
     // Try printer by name
     let test_printer = printers::get_printer_by_name("test");
@@ -71,7 +75,9 @@ fn main() {
 ## System Requiriments
 
 ### Windows
-For Windows printers will be use winspool apis
+For Windows printers will be use winspool apis to retrive printer and powershell to send a doc to printer
+
+**Note**: For some complex reasons, the printing action stays doing using powershell. If you want collaborate to implement winspool for printing documents, your contribution will be greatly appreciated
 
 ### Unix
 For Unix is necessary cups service installed
