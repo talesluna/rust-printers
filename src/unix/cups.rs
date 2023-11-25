@@ -1,5 +1,8 @@
 use libc::{c_char, c_int};
-use std::{ffi::{CStr, CString}, ptr};
+use std::{
+    ffi::{CStr, CString},
+    ptr,
+};
 
 use crate::shared::interface::PlatformPrinterGetters;
 
@@ -28,15 +31,11 @@ pub struct CupsDestT {
     options: *mut CupsOptionT,
 }
 
-/**
- * Implements getters for the cups_dest_s struct
- */
 impl CupsDestT {
-
     /**
      * Returns a string value of an key on cups options (If the key was not found return a empty string)
      */
-    pub fn get_option_by_key(&self, key: &str) -> String {
+    fn get_option_by_key(&self, key: &str) -> String {
         let mut value = "".to_string();
 
         for i in 1..self.num_options {
@@ -54,14 +53,11 @@ impl CupsDestT {
 
         return value;
     }
-
-
 }
 
 impl PlatformPrinterGetters for CupsDestT {
-
     /**
-     * Returns the name of the destionation
+     * Returns the name of the destination
      */
     fn get_system_name(&self) -> String {
         if self.name.is_null() {
@@ -75,10 +71,9 @@ impl PlatformPrinterGetters for CupsDestT {
     /**
      * Returns default destination definition
      */
-    fn get_is_default(&self) -> c_int {
-        return self.is_default;
+    fn get_is_default(&self) -> bool {
+        return self.is_default == 1;
     }
-
 
     /**
      * Returns readable name of dest by "printer-info" option
@@ -87,9 +82,8 @@ impl PlatformPrinterGetters for CupsDestT {
         return self.get_option_by_key("printer-info");
     }
 
-
     /**
-     * Returns redeable name of the dest driver by "printer-make-and-model" option
+     * Returns readable name of the dest driver by "printer-make-and-model" option
      */
     fn get_marker_and_model(&self) -> String {
         return self.get_option_by_key("printer-make-and-model");
@@ -98,8 +92,8 @@ impl PlatformPrinterGetters for CupsDestT {
     /**
      * Return if the destination is being shared with other computers
      */
-    fn get_is_shared(&self) -> String {
-        return self.get_option_by_key("printer-is-shared");
+    fn get_is_shared(&self) -> bool {
+        return self.get_option_by_key("printer-is-shared") == "true";
     }
 
     /**
@@ -122,7 +116,7 @@ impl PlatformPrinterGetters for CupsDestT {
     fn get_state(&self) -> String {
         return self.get_option_by_key("printer-state");
     }
-
+    
 }
 
 #[link(name = "cups")]
@@ -134,7 +128,7 @@ extern "C" {
         title: *const c_char,
         options: i32,
     ) -> i32;
-    // fn cupsFreeDests(num_dests: c_int, dests: *const CupsDestT);
+    fn cupsFreeDests(num_dests: c_int, dests: *const CupsDestT);
 }
 
 /**
@@ -151,7 +145,7 @@ pub fn get_dests() -> Vec<&'static CupsDestT> {
         let dest = unsafe { &*dest_ptr };
 
         // Not include printer with null names or duplex shared
-        if !dest.name.is_null() && dest.get_is_shared() != "" {
+        if !dest.name.is_null() && dest.get_option_by_key("printer-is-shared") != "" {
             dests.push(dest);
         }
     }
@@ -159,25 +153,25 @@ pub fn get_dests() -> Vec<&'static CupsDestT> {
     return dests;
 }
 
-// pub fn free_dests(dests: Vec<&CupsDestT>) {
-//     let dest_ptr = dests.as_ptr();
-//     unsafe { cupsFreeDests(1, *dest_ptr) };
-// }
-
-
-pub fn print_file(printer_name: &str, file_path: &str) -> bool {
+/**
+ * Send an file to printer
+ */
+pub fn print_file(printer_name: &str, file_path: &str, job_name: Option<&str>) -> bool {
     unsafe {
-
         let printer_name = CString::new(printer_name).unwrap();
         let filename = CString::new(file_path).unwrap();
+        let title = CString::new(job_name.unwrap_or(file_path)).unwrap();
 
-        let result = cupsPrintFile(
-            printer_name.as_ptr(),
-            filename.as_ptr(),
-            ptr::null(),
-            0,
-        );
+        let result = cupsPrintFile(printer_name.as_ptr(), filename.as_ptr(), title.as_ptr(), 0);
 
-        return result == 0;
+        return result != 0;
     }
+}
+
+/**
+ * Free the allocated memory for dests
+ */
+pub fn free_dests(dests: &Vec<&CupsDestT>) {
+    let ptr = dests.as_ptr();
+    unsafe { cupsFreeDests(1 as i32, *ptr) };
 }

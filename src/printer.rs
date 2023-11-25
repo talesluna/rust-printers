@@ -1,3 +1,5 @@
+use crate::shared::interface::PlatformPrinterGetters;
+
 /**
  * Enum of the Printer state
  */
@@ -5,24 +7,25 @@
 pub enum PrinterState {
 
     /**
-     * The printer is able to receive jobs
+     * The printer is able to receive jobs (also idle)
      */
     READY,
 
     /**
-     * The printer is busy doing aanything
-     */
-    BUSY,
-
-    /**
-     * The printer is not accepting jobs
+     * The printer is not accepting jobs (also stopped)
      */
     PAUSED,
 
     /**
-     * The printer is now priting an document
+     * The printer is now printing an document (also processing)
      */
     PRINTING,
+
+    /**
+     * All other status like error, resources, manual intervention, etc...
+     */
+    UNKNOWN,
+
 }
 
 
@@ -116,18 +119,32 @@ impl Clone for Printer {
 
 impl Printer {
 
+    pub fn from_platform_printer_getters(platform_printer: & dyn PlatformPrinterGetters, state: PrinterState) -> Printer {
+        let printer = Printer {
+            name: platform_printer.get_name(),
+            system_name: platform_printer.get_system_name(),
+            driver_name: platform_printer.get_marker_and_model(),
+            location: platform_printer.get_location(),
+            state,
+            uri: platform_printer.get_uri(),
+            is_default: platform_printer.get_is_default(),
+            is_shared: platform_printer.get_is_shared(),
+        };
 
-    /**
-     * Print bytes with self printer instnace
-     */
-    pub fn print(&self, buffer: &[u8]) -> Result<bool, String> {
-        return crate::print(&self.system_name, buffer);
+        return printer;
     }
 
     /**
-     * Print specific file with self printer instnace
+     * Print bytes with self printer instance
      */
-    pub fn print_file(&self, file_path: &str) -> Result<bool, String> {
-        return crate::print_file(&self.system_name, file_path);
+    pub fn print(&self, buffer: &[u8], job_name: Option<&str>) -> Result<bool, String> {
+        return crate::print(&self.system_name, buffer, job_name);
+    }
+
+    /**
+     * Print specific file with self printer instance
+     */
+    pub fn print_file(&self, file_path: &str, job_name: Option<&str>) -> Result<bool, String> {
+        return crate::print_file(&self.system_name, file_path, job_name);
     }
 }

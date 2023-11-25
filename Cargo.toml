@@ -8,7 +8,7 @@ keywords = ["printer", "printing", "print",  "cups", "winspool"]
 categories = ["os", "os::windows-apis", "os::linux-apis", "development-tools"]
 homepage = "https://crates.io/crates/printers"
 repository = "https://github.com/talesluna/rust-printers"
-description = "A lib to get printers and print files or bytes on unix and windows"
+description = "A lib to get printers and print files on unix and windows"
 readme = "README.md"
 
 [dependencies]

@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
 
-use libc::{wchar_t, c_void, c_ulong, c_int, c_uint};
-use std::{ptr, slice};
 use crate::shared::interface::PlatformPrinterGetters;
+use libc::{c_int, c_uint, c_ulong, c_void, wchar_t};
+use std::{ ptr, slice };
 
 #[link(name = "winspool")]
 extern "system" {
@@ -16,10 +16,12 @@ extern "system" {
         pcbNeeded: *mut c_ulong,
         pcReturned: *mut c_ulong,
     ) -> c_int;
+
+    fn GetDefaultPrinterW(pszBuffer: *mut wchar_t, pcchBuffer: *mut c_ulong) -> c_int;
+
 }
 
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 #[repr(C)]
 pub struct PrinterInfo2w {
     pub pServerName: *mut wchar_t,
@@ -45,97 +47,127 @@ pub struct PrinterInfo2w {
     pub AveragePPM: c_ulong,
 }
 
-
-fn string_from_wchar_t(s: *mut wchar_t) -> String {
-    if s.is_null() {
-        return "".to_string()
-    }
-
-    let mut vec: Vec<u16> = Vec::new();
-    let mut i = 0;
-    unsafe {
-        while *s.offset(i) != 0 {
-            vec.push(*s.offset(i) as u16);
-            i += 1;
-        }
-    }
-    return String::from_utf16_lossy(&vec);
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+struct PrinterDefaults {
+    pDatatype: *mut wchar_t,
+    pDevMode: *mut c_void,
+    DesiredAccess: c_ulong,
 }
 
+#[derive(Debug, Clone, Copy)]
+#[repr(C)]
+struct AddJobInfo2 {
+    job_level: c_ulong,
+    printer_name: *const wchar_t,
+    document_name: *const wchar_t,
+    datatype: *const wchar_t,
+    status: *mut wchar_t,
+}
+
+impl PrinterInfo2w {
+    /**
+     * Returns a string of wchar_t pointer
+     */
+    fn get_wchar_t_value(&self, s: *const wchar_t) -> String {
+        if s.is_null() {
+            return "".to_string();
+        }
+
+        let mut vec: Vec<u16> = Vec::new();
+        let mut i = 0;
+        unsafe {
+            while *s.offset(i) != 0 {
+                vec.push(*s.offset(i) as u16);
+                i += 1;
+            }
+        }
+        return String::from_utf16_lossy(&vec);
+    }
+}
 
 impl PlatformPrinterGetters for PrinterInfo2w {
-
     /**
-     * Returns the name of the destionation
+     * Returns the readable name of print
      */
     fn get_name(&self) -> String {
-        return string_from_wchar_t(self.pPrinterName);
+        return self.get_wchar_t_value(self.pPrinterName);
     }
 
     /**
-     * Returns default destination definition
+     * Returns default printer definition
      */
-    fn get_is_default(&self) -> c_int {
-        return 0;
+    fn get_is_default(&self) -> bool {
+        return unsafe { *self.pPrinterName == *self::get_default_printer() };
     }
 
-
     /**
-     * Returns readable name of dest by "printer-info" option
+     * Returns the name of printer on system (also name)
      */
     fn get_system_name(&self) -> String {
-        return string_from_wchar_t(self.pPrinterName);
+        return self.get_wchar_t_value(self.pPrinterName);
     }
 
-
     /**
-     * Returns redeable name of the dest driver by "printer-make-and-model" option
+     * Returns readable name of the printer driver
      */
     fn get_marker_and_model(&self) -> String {
-        return string_from_wchar_t(self.pDriverName);
+        return self.get_wchar_t_value(self.pDriverName);
     }
 
     /**
-     * Return if the destination is being shared with other computers
+     * Return if the printer is being shared with other computers
      */
-    fn get_is_shared(&self) -> String {
-        return (if self.pShareName.is_null() { "false" } else { "true" }).to_string();
+    fn get_is_shared(&self) -> bool {
+        return (self.Attributes & 0x00000008) == 8;
     }
 
     /**
-     * Return the drive version
+     * Return the printer uri
      */
     fn get_uri(&self) -> String {
-        return string_from_wchar_t(self.pServerName);
+        return "".to_string();
     }
 
     /**
-     * Return the location option
+     * Return the location of the printer
      */
     fn get_location(&self) -> String {
-        return string_from_wchar_t(self.pLocation);
+        return self.get_wchar_t_value(self.pLocation);
     }
 
     /**
-     * Return the state of the CUPS printer
+     * Return the state of the Winspool printer
      */
     fn get_state(&self) -> String {
         return self.Status.to_string();
     }
-
 }
 
+/**
+ * Returns the default system printer
+ */
+fn get_default_printer() -> *const wchar_t {
+    let mut name_size: c_ulong = 0;
+    unsafe {
+        GetDefaultPrinterW(ptr::null_mut(), &mut name_size);
+        let mut buffer: Vec<wchar_t> = vec![0; name_size as usize];
+        GetDefaultPrinterW(buffer.as_mut_ptr(), &mut name_size);
+        return buffer.as_ptr();
+    }
+}
 
+/**
+ * Returns the system printers list
+ */
 pub fn enum_printers() -> Vec<PrinterInfo2w> {
-
     let mut tries = 0;
     let mut bytes_needed: c_ulong = 0;
     let mut count_printers: c_ulong = 0;
-    
-    let mut buffer: Vec<PrinterInfo2w> = Vec::with_capacity(bytes_needed as usize);
-    
-    loop {
 
+    let mut buffer: Vec<PrinterInfo2w> = Vec::with_capacity(bytes_needed as usize);
+
+    loop {
         if tries > 2 {
             break;
         }
@@ -145,7 +177,7 @@ pub fn enum_printers() -> Vec<PrinterInfo2w> {
 
         let result = unsafe {
             EnumPrintersW(
-                2 | 4,
+                0x00000002 | 0x00000004,
                 ptr::null_mut(),
                 2,
                 buffer_ptr as *mut c_void,
@@ -156,18 +188,12 @@ pub fn enum_printers() -> Vec<PrinterInfo2w> {
         };
 
         if result != 0 {
-
-            let sliced = unsafe { slice::from_raw_parts(
-                buffer_ptr, 
-                count_printers as usize
-            )};
-
+            let sliced = unsafe { slice::from_raw_parts(buffer_ptr, count_printers as usize) };
             for info in sliced {
-                if !info.pPortName.is_null() {
+                if !info.pPrinterName.is_null() {
                     buffer.push(info.clone());
                 }
             }
-
             break;
         }
 
@@ -175,5 +201,4 @@ pub fn enum_printers() -> Vec<PrinterInfo2w> {
     }
 
     return buffer;
-
 }
