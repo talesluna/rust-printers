@@ -1,9 +1,9 @@
-use crate::shared::interface::PlatformPrinterGetters;
+use crate::{get_printers, shared::interface::PlatformPrinterGetters};
 
 /**
  * Enum of the Printer state
  */
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub enum PrinterState {
 
     /**
@@ -146,5 +146,30 @@ impl Printer {
      */
     pub fn print_file(&self, file_path: &str, job_name: Option<&str>) -> Result<bool, String> {
         return crate::print_file(&self.system_name, file_path, job_name);
+    }
+
+    /**
+     * Update state of the self printer instance
+     */
+    pub fn update_state(&mut self) -> Result<PrinterState, String> {
+        let printers: Vec<Printer> = get_printers()
+            .into_iter()
+            .filter(|p| p.system_name == self.system_name)
+            .collect();
+
+        match printers.len() {
+            1 => {
+                self.state = printers[0].state;
+                Ok(self.state)
+            }
+            2.. => Err(format!(
+                "Multiple printers with the name {} have been found",
+                self.system_name
+            )),
+            _ => Err(format!(
+                "No printer with the name {} have been found",
+                self.system_name
+            )),
+        }
     }
 }
