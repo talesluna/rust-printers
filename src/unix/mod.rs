@@ -31,10 +31,18 @@ pub fn get_printers() -> Vec<Printer> {
             state = PrinterState::PAUSED;
         }
 
-        printers.push(Printer::from_platform_printer_getters(dest.clone(), state));
+        printers.push(Printer {
+            name: dest.get_name(),
+            system_name: dest.get_system_name(),
+            driver_name: dest.get_marker_and_model(),
+            location: dest.get_location(),
+            state,
+            uri: dest.get_uri(),
+            is_default: dest.get_is_default(),
+            is_shared: dest.get_is_shared(),
+        });
     }
 
-    cups::free_dests(cups_dests);
     return printers;
 }
 
