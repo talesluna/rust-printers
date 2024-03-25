@@ -172,6 +172,7 @@ pub fn print_file(printer_name: &str, file_path: &str, job_name: Option<&str>) -
  * Free the allocated memory for dests
  */
 pub fn free_dests(dests: &Vec<&CupsDestT>) {
-    let ptr = dests.as_ptr();
-    unsafe { cupsFreeDests(1 as i32, *ptr) };
+    let mut dests_ptr: *mut CupsDestT = ptr::null_mut();
+    let dests_count = unsafe { cupsGetDests(&mut dests_ptr) };
+    unsafe { cupsFreeDests(dests_count, dests_ptr) };
 }
