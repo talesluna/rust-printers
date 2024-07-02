@@ -3,7 +3,7 @@ use crate::{get_printers, shared::interface::PlatformPrinterGetters};
 /**
  * Enum of the Printer state
  */
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PrinterState {
 
     /**
