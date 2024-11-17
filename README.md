@@ -42,7 +42,6 @@ use printers;
 
 fn main() {
 
-
     // Vector of system printers
     let printers = printers::get_printers();
 

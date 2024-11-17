@@ -1,5 +1,7 @@
 {
     "rust-analyzer.check.allTargets": true,
     "rust-analyzer.procMacro.enable": true,
-    "rust-analyzer.diagnostics.disabled": ["unlinked-file"]
+    "rust-analyzer.diagnostics.disabled": ["unlinked-file"],
+    "rust-analyzer.server.extraEnv": { "RUSTUP_TOOLCHAIN": "stable" }
+
 }

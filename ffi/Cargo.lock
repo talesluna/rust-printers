@@ -4,13 +4,21 @@ version = 3
 
 [[package]]
 name = "libc"
-version = "0.2.162"
+version = "0.2.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18d287de67fe55fd7e1581fe933d965a5a9477b38e949cfa9f8574ef01506398"
+checksum = "89d92a4743f9a61002fae18374ed11e7973f530cb3a3255fb354818118b2203c"
 
 [[package]]
 name = "printers"
 version = "2.0.0"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "printers_ffi"
+version = "1.0.0"
+dependencies = [
+ "libc",
+ "printers",
 ]

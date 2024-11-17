@@ -1,51 +1,48 @@
 use std::str;
-use crate::printer::{Printer, PrinterState};
-
+use crate::common::{
+    printer::{job::PrinterJob, Printer},
+    traits::platform::PlatformActions
+};
 
 mod cups;
 
-/**
- * Get printers on unix systems using CUPS
- */
-pub fn get_printers() -> Vec<Printer> {
+impl PlatformActions for crate::Platform {
+    fn get_printers() -> Vec<Printer> {
+        let dests = cups::dests::get_dests();
+        let mut printers = Vec::<Printer>::new();
 
-    let cups_dests = &cups::get_dests();
-    let mut printers: Vec<Printer> = vec![];
-
-    use crate::shared::interface::PlatformPrinterGetters;
-
-    for dest in cups_dests {        
-
-        let mut state = crate::printer::PrinterState::UNKNOWN;
-        let cups_state = dest.get_state();
-
-        if cups_state == "3" {
-            state = PrinterState::READY;
-        }
-        
-        if cups_state == "4" {
-            state = PrinterState::PRINTING;
+        for platform_printer in dests {
+            if !platform_printer.is_shared_duplex() {
+                printers.push(Printer::from_platform_printer_getters(platform_printer));
+            }
         }
 
-        if cups_state == "5" {
-            state = PrinterState::PAUSED;
-        }
-
-        printers.push(Printer::from_platform_printer_getters(dest.clone(), state));
+        cups::dests::free(dests);
+        return printers;
     }
 
-    cups::free_dests(cups_dests);
-    return printers;
-}
+    fn print(printer_system_name: &str, file_path: &str, job_name: Option<&str>) -> bool {
+        let result = cups::jobs::print_file(printer_system_name, file_path, job_name);
+        return result;
+    }
 
-/**
- * Print on unix systems using CUPS
- */
-pub fn print(printer_system_name: &str, file_path: &str, job_name: Option<&str>) -> Result<bool, String> {
-    let result = cups::print_file(printer_system_name, file_path, job_name);
-    return if result {
-        Result::Ok(true)
-    } else {
-        Result::Err("failure on send document to printer".to_string())
+    fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
+        let printer_jobs = cups::jobs::get_printer_jobs(printer_name, active_only);
+        let mut jobs = Vec::new();
+        for platform_printer_job in printer_jobs {
+            jobs.push(PrinterJob::from_platform_printer_job_getters(
+                platform_printer_job,
+            ));
+        }
+
+        return jobs;
+    }
+
+    fn get_default_printer() -> Option<Printer> {
+        return None;
+    }
+
+    fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
+        return None;
     }
 }
