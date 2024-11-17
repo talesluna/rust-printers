@@ -1,0 +1,5 @@
+{
+    "rust-analyzer.check.allTargets": true,
+    "rust-analyzer.procMacro.enable": true,
+    "rust-analyzer.diagnostics.disabled": ["unlinked-file"]
+}
