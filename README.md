@@ -9,7 +9,7 @@ Printer can provide a list of printers available on system and send print jobs t
 > Return a vector of all available printers
 
 ```rust
-let printers = get_printers(); //-> Vec<Printer>
+let printers = get_printers(); // -> Vec<Printer>
 ```
 
 > Create print job of an byte array
