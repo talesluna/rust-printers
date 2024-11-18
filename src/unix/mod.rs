@@ -42,28 +42,24 @@ impl PlatformActions for crate::Platform {
     }
 
     fn get_default_printer() -> Option<Printer> {
-        let mut result: Option<Printer> = None;
         let dests = get_dests();
-        for dest in dests {
-            if dest.get_is_default() {
-                result = Some(Printer::from_platform_printer_getters(dest));
-            }
-        }
+        let dest = dests
+            .into_iter()
+            .find(|d| d.get_is_default())
+            .map(|d|Printer::from_platform_printer_getters(d));
 
         cups::dests::free(dests);
-        return result;
+        return dest;
     }
 
     fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
-        let mut result: Option<Printer> = None;
         let dests = get_dests();
-        for dest in dests {
-            if dest.get_name() == printer_name || dest.get_system_name() == printer_name {
-                result = Some(Printer::from_platform_printer_getters(dest));
-            }
-        }
+        let dest = dests
+            .into_iter()
+            .find(|d| d.get_name() == printer_name || d.get_system_name() == printer_name)
+            .map(|d|Printer::from_platform_printer_getters(d));
 
         cups::dests::free(dests);
-        return result;
+        return dest;
     }
 }

@@ -71,7 +71,7 @@ impl PlatformPrinterGetters for CupsDestT {
      * Returns readable name of dest by "printer-info" option
      */
     fn get_name(&self) -> String {
-        return self.get_option("printer-info");
+        return self.get_option("printer-info").trim().to_string();
     }
 
     /**
