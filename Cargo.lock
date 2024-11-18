@@ -10,7 +10,7 @@ checksum = "18d287de67fe55fd7e1581fe933d965a5a9477b38e949cfa9f8574ef01506398"
 
 [[package]]
 name = "printers"
-version = "2.0.0"
+version = "2.1.0-rc"
 dependencies = [
  "libc",
 ]

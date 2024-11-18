@@ -29,6 +29,7 @@ impl PlatformActions for crate::Platform {
         );
     }
 
+    // TODO: implements real logic with winspool
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
         return if !printer_name.is_empty() && active_only {
             Vec::new()
