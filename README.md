@@ -15,26 +15,27 @@ get_printers() -> Vec<Printer>
 > Create print job of an byte array
 
 ```rust
-printer.print(&[u8]) -> Result<(), &'static str>
+let data = "42".as_bytes();
+printer.print(data); // -> Result<(), &'static str>
 ```
 
 > Create print job of an file
 
 ```rust
 let path = "my_file/example/path.txt";
-printer.print_file(path) -> Result<(), &'static str>
+printer.print_file(path); // -> Result<(), &'static str>
 ```
 
 > Find printer by the name
 
 ```rust
-get_printer_by_name("my_printer") -> Option<Printer>
+let my_printer = get_printer_by_name("my_printer"); // -> Option<Printer>
 ```
 
 > Get the default printer
 
 ```rust
-get_default_printer() -> Option<Printer>
+let printer = get_default_printer(); // -> Option<Printer>
 ```
 
 ## Example
