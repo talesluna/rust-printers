@@ -157,7 +157,11 @@ pub fn enum_printers(name: Option<&str>) -> &'static [PrinterInfo2w] {
     let mut bytes_needed: c_ulong = 0;
     let mut count_printers: c_ulong = 0;
     let mut buffer_ptr: *mut PrinterInfo2w = ptr::null_mut();
-    let name_ptr = if name.is_none() { ptr::null_mut() } else { utils::strings::str_to_wchar_t_ptr(name.unwrap()) } as *const wchar_t;
+    let name_ptr = if name.is_none() {
+        ptr::null_mut()
+    } else {
+        utils::strings::str_to_wide_string(name.unwrap()).as_ptr()
+    } as *const wchar_t;
 
     // println!(">> name_ptr={:?}", utils::strings::wchar_t_to_string(name_ptr));
 

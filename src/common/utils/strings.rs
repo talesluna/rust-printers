@@ -1,7 +1,4 @@
-use std::{
-    ffi::{CStr, CString},
-    ptr,
-};
+use std::ffi::{CStr, CString};
 
 use libc::{c_char, wchar_t};
 
@@ -14,19 +11,13 @@ pub fn c_char_to_string(value: *const c_char) -> String {
     };
 }
 
-pub fn str_to_c_char_ptr(value: &str) -> *const c_char {
+pub fn str_to_cstring(value: &str) -> CString {
     let c_string = CString::new(value);
-    return if c_string.is_ok() {
-        let result = c_string.unwrap();
-        result.as_ptr()
-    } else {
-        ptr::null()
-    };
+    return c_string.unwrap();
 }
 
-pub fn str_to_wchar_t_ptr(value: &str) -> *mut wchar_t {
-    let mut wide: Vec<u16> = value.encode_utf16().chain(Some(0)).collect();
-    return wide.as_mut_ptr() as *mut wchar_t;
+pub fn str_to_wide_string(value: &str) -> Vec<u16> {
+    return value.encode_utf16().chain(Some(0)).collect();
 }
 
 pub fn wchar_t_to_string(value: *const wchar_t) -> String {

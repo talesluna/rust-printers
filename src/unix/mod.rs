@@ -1,7 +1,9 @@
 use std::str;
+use cups::dests::get_dests;
+
 use crate::common::{
     printer::{job::PrinterJob, Printer},
-    traits::platform::PlatformActions
+    traits::platform::{PlatformActions, PlatformPrinterGetters}
 };
 
 mod cups;
@@ -21,7 +23,8 @@ impl PlatformActions for crate::Platform {
         return printers;
     }
 
-    fn print(printer_system_name: &str, file_path: &str, job_name: Option<&str>) -> bool {
+    #[cfg(target_family = "unix")]
+    fn print(printer_system_name: &str, file_path: &str, job_name: Option<&str>) ->  Result<(), &'static str> {
         let result = cups::jobs::print_file(printer_system_name, file_path, job_name);
         return result;
     }
@@ -39,10 +42,28 @@ impl PlatformActions for crate::Platform {
     }
 
     fn get_default_printer() -> Option<Printer> {
-        return None;
+        let mut result: Option<Printer> = None;
+        let dests = get_dests();
+        for dest in dests {
+            if dest.get_is_default() {
+                result = Some(Printer::from_platform_printer_getters(dest));
+            }
+        }
+
+        cups::dests::free(dests);
+        return result;
     }
 
     fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
-        return None;
+        let mut result: Option<Printer> = None;
+        let dests = get_dests();
+        for dest in dests {
+            if dest.get_name() == printer_name || dest.get_system_name() == printer_name {
+                result = Some(Printer::from_platform_printer_getters(dest));
+            }
+        }
+
+        cups::dests::free(dests);
+        return result;
     }
 }

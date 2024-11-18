@@ -1,6 +1,6 @@
 use crate::common::printer::job::PrinterJob;
 use crate::common::printer::Printer;
-use crate::common::traits::platform::PlatformActions;
+use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
 
 mod winspool;
 
@@ -18,18 +18,23 @@ impl PlatformActions for crate::Platform {
         return printers;
     }
 
-    fn print(printer_system_name: &str, file_path: &str, job_name: Option<&str>) -> bool {
-        let job_name = job_name.unwrap_or(file_path);
+    #[cfg(target_family = "windows")]
+    fn print(printer_system_name: &str, buffer: &[u8], job_name: Option<&str>) -> Result<(), &'static str> {
+        let job_name = job_name.unwrap_or("job");
+
         return winspool::jobs::print_to_printer(
             printer_system_name,
-            file_path,
             job_name,
-            "42".as_bytes(),
+            buffer,
         );
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
-        return Vec::new();
+        return if !printer_name.is_empty() && active_only {
+            Vec::new()
+        } else {
+            Vec::new()
+        }
     }
 
     fn get_default_printer() -> Option<Printer> {
@@ -38,10 +43,10 @@ impl PlatformActions for crate::Platform {
     }
 
     fn get_printer_by_name(name: &str) -> Option<Printer> {
-        let result = winspool::info::enum_printers(Some(name));
-        println!(">>> {:}", result.len());
-        return result
-            .get(0)
+        return winspool::info::enum_printers(None)
+            .into_iter()
+            .find(|p| p.get_name() == name || p.get_system_name() == name)
             .map(|p| Printer::from_platform_printer_getters(p));
     }
+    
 }

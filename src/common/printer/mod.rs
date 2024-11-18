@@ -1,18 +1,12 @@
 pub mod state;
 pub mod job;
 
-use std::{
-    env,
-    fmt::{Debug, Error, Formatter},
-    fs::File,
-    io::Write,
-    time::{SystemTime, UNIX_EPOCH},
-};
+use std::fmt::{Debug, Error, Formatter};
 
 use state::PrinterState;
 use self::job::PrinterJob;
 
-use super::traits::platform::{PlatformPrinterGetters, PlatformActions};
+use super::{traits::platform::{PlatformActions, PlatformPrinterGetters}, utils};
 
 /**
  * Printer is a struct to representation the system printer
@@ -155,33 +149,42 @@ impl Printer {
     /**
      * Print bytes with self printer instance
      */
-    pub fn print(&self, buffer: &[u8], job_name: Option<&str>) -> bool {
-        let time = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .subsec_nanos();
+    pub fn print(&self, buffer: &[u8], job_name: Option<&str>) -> Result<(), &'static str> {
+        #[cfg(target_family = "unix")] {
+            let path = utils::file::save_tmp_file(buffer);
+            return if path.is_some() {
+                let file_path = path.unwrap();
+                let result = self.print_file(file_path.to_str().unwrap(), job_name);
+                result
+            } else {
+                Err("Failed to create temp file")
+            };
+        }
 
-        let file_path = env::temp_dir().join(time.to_string());
-
-        let mut tmp_file = File::create(&file_path).unwrap();
-        let save = tmp_file.write(buffer);
-
-        return if save.is_ok() {
-            let result = self.print_file(file_path.to_str().unwrap(), job_name);
-            // remove_file(file_path).unwrap();
-            return result;
-        } else {
-            false
-        };
+        #[cfg(target_family = "windows")] {
+            return crate::Platform::print(self.system_name.as_str(), buffer, job_name);
+        }
     }
 
     /**
      * Print specific file with self printer instance
      */
-    pub fn print_file(&self, file_path: &str, job_name: Option<&str>) -> bool {
-        return crate::Platform::print(self.system_name.as_str(), file_path, job_name);
-    }
+    pub fn print_file(&self, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str> {
 
+        #[cfg(target_family = "unix")] {
+            return crate::Platform::print(self.system_name.as_str(), file_path, job_name);
+        }
+
+        #[cfg(target_family = "windows")] {
+            let buffer = utils::file::get_file_as_bytes(file_path);
+            return if buffer.is_some() {
+                crate::Platform::print(self.system_name.as_str(), &buffer.unwrap(), job_name)
+            } else {
+                Err("failed to read file")
+            }
+        }
+    }
+    
     /**
      * 
      */

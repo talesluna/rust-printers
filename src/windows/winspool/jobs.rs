@@ -45,45 +45,36 @@ struct DocInfo1 {
 
 pub fn print_to_printer(
     printer_name: &str,
-    document_name: &str,
     job_name: &str,
     document_content: &[u8],
-) -> bool {
-    let printer_name = utils::strings::str_to_wchar_t_ptr(printer_name);
-
-    let mut printer_handle: *mut c_void = ptr::null_mut();
-
+) -> Result<(), &'static str> {    
     unsafe {
-        println!("A0 {:?}", printer_handle);
 
-        let open_result = OpenPrinterW(printer_name, &mut printer_handle, ptr::null_mut());
+        let printer_name = utils::strings::str_to_wide_string(printer_name);
+        let mut printer_handle: *mut c_void = ptr::null_mut();
 
-        println!("A1 {:?}", printer_handle);
-        if open_result == 0 {
-            return false;
+        if OpenPrinterW(printer_name.as_ptr() as *const wchar_t, &mut printer_handle, ptr::null_mut()) == 0 {
+            return Err("OpenPrinterW failed");
         }
+
+        let mut pDocName = utils::strings::str_to_wide_string(job_name);
+        let mut pDatatype = utils::strings::str_to_wide_string("RAW");
 
         let doc_info = DocInfo1 {
-            pDocName: utils::strings::str_to_wchar_t_ptr(document_name),
+            pDocName: pDocName.as_mut_ptr() as *mut wchar_t,
+            pDatatype: pDatatype.as_mut_ptr() as *mut wchar_t,
             pOutputFile: ptr::null_mut(),
-            pDatatype: utils::strings::str_to_wchar_t_ptr("RAW").to_owned(),
         };
-
-        let start_result = StartDocPrinterW(printer_handle, 1, &doc_info);
-        println!("A2 {:?}", start_result);
-
-        if start_result == 0 {
+        
+        if StartDocPrinterW(printer_handle, 1, &doc_info) == 0 {
             ClosePrinter(printer_handle);
-            return false;
+            return Err("StartDocPrinterW failed");
         }
 
-        let start_pp_result = StartPagePrinter(printer_handle);
-        println!("A3 {:?}", start_pp_result);
-
-        if start_pp_result == 0 {
+        if StartPagePrinter(printer_handle) == 0 {
             EndDocPrinter(printer_handle);
             ClosePrinter(printer_handle);
-            return false;
+            return Err("StartPagePrinter failed");
         }
 
         let mut bytes_written: c_ulong = 0;
@@ -98,9 +89,11 @@ pub fn print_to_printer(
         EndDocPrinter(printer_handle);
         ClosePrinter(printer_handle);
 
-        println!("A3 {:?} {:?}", bytes_written, write_result);
-
+        if write_result == 0 {
+            return Err("WritePrinter failed")
+        }
     }
 
-    return true;
+    return Ok(());
+
 }

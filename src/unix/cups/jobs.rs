@@ -81,12 +81,12 @@ pub fn get_printer_jobs(printer_name: &str, active_only: bool) -> &'static [Cups
     let mut jobs_ptr: *mut CupsJobsS = std::ptr::null_mut();
 
     let whichjobs = if active_only { 0 } else { -1 };
-    let name = utils::strings::str_to_c_char_ptr(printer_name);
+    let name = utils::strings::str_to_cstring(printer_name);
 
     println!("whichjobs {:?}", whichjobs);
 
     return unsafe {
-        let jobs_count = cupsGetJobs(&mut jobs_ptr, name, 0, whichjobs);
+        let jobs_count = cupsGetJobs(&mut jobs_ptr, name.as_ptr(), 0, whichjobs);
         slice::from_raw_parts(jobs_ptr, jobs_count as usize)
     };
 }
@@ -94,16 +94,17 @@ pub fn get_printer_jobs(printer_name: &str, active_only: bool) -> &'static [Cups
 /**
  * Send an file to printer
  */
-pub fn print_file(printer_name: &str, file_path: &str, job_name: Option<&str>) -> bool {
-    unsafe {
-        let printer = utils::strings::str_to_c_char_ptr(printer_name);
-        let filename = utils::strings::str_to_c_char_ptr(file_path);
-        let title = utils::strings::str_to_c_char_ptr(job_name.unwrap_or(file_path));
+pub fn print_file(printer_name: &str, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str> {
+    unsafe {        
+        let printer = &utils::strings::str_to_cstring(printer_name);
+        let filename = utils::strings::str_to_cstring(file_path);
+        let title = utils::strings::str_to_cstring(job_name.unwrap_or(file_path));
  
-        let result = cupsPrintFile(printer, filename, title, 0);
-
-        println!("{:?} | {:?} | {:?} | {:?}", printer, filename, title, result);
-
-        return result != 0;
+        let result = cupsPrintFile(printer.as_ptr(), filename.as_ptr(), title.as_ptr(), 0);
+        return if result == 0 {
+            Err("cupsPrintFile failed")
+        } else {
+            Ok(())
+        }
     }
 }
