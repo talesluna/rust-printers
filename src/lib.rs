@@ -1,20 +1,33 @@
-//! Get printers and print files or bytes on unix and windows
+//! Get printers and send files or bytes to print on unix and windows
 //!
-//! Printers **is not a lib for printer drivers or cups**. Printers is a simple lib to call printers apis for unix *(cups)* and windows *(winspool)* systems.
-//! Printer can provide a list of printers available on the system and perform document printing.
+//! Printers is a simple lib to call printers apis for unix *(cups)* and windows *(winspool)* systems.
+//!
+//! Printers can provide a list of printers available on the system and send print jobs to them
 //!
 //! ```rust
-//! use printers;
+//! use printers::{get_printer_by_name, get_default_printer, get_printers};
 //!
-//! let printers = printers::get_printers();
+//! fn main() {
 //!
-//! for printer in printers {
-//!     let job1 = printer.print("42".as_bytes(), Some("Everything"));
-//!     let job2 = printer.print_file("/path/to/any.file", None);
+//!    // Iterate all available printers
+//!    for printer in get_printers() {
+//!        println!("{:?}", printer);
+//!    }
 //!
-//!     println!("{:?}", printer);
-//!     println!("{:?}", job1);
-//!     println!("{:?}", job2);
+//!    // Get a printer by the name
+//!    let my_printer = get_printer_by_name("my_printer");
+//!    if my_printer.is_some() {
+//!        my_printer.unwrap().print_file("notes.txt", None);
+//!        // Err("cupsPrintFile failed")
+//!    }
+//!
+//!    // Use the default printer
+//!    let default_printer = get_default_printer();
+//!    if default_printer.is_some() {
+//!        default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"));
+//!        // Ok(())
+//!    }
+//!
 //! }
 //! ```
 //!
@@ -30,7 +43,7 @@ mod unix;
 #[cfg(target_family = "windows")]
 mod windows;
 
-use common::{traits::platform::PlatformActions, printer::Printer};
+use common::{traits::platform::PlatformActions, base::printer::Printer};
 
 /**
  * Return all available printers on system

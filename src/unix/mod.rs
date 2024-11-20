@@ -2,22 +2,21 @@ use std::str;
 use cups::dests::get_dests;
 
 use crate::common::{
-    printer::{job::PrinterJob, Printer},
+    base::{job::PrinterJob, printer::Printer},
     traits::platform::{PlatformActions, PlatformPrinterGetters}
 };
 
 mod cups;
 
 impl PlatformActions for crate::Platform {
-    fn get_printers() -> Vec<Printer> {
-        let dests = cups::dests::get_dests();
-        let mut printers = Vec::<Printer>::new();
 
-        for platform_printer in dests {
-            if !platform_printer.is_shared_duplex() {
-                printers.push(Printer::from_platform_printer_getters(platform_printer));
-            }
-        }
+    fn get_printers() -> Vec<Printer> {
+        let dests = cups::dests::get_dests().unwrap_or_default();
+        let printers = dests
+            .into_iter()
+            .filter(|p|!p.is_shared_duplex())
+            .map(|p|Printer::from_platform_printer_getters(p))
+            .collect();
 
         cups::dests::free(dests);
         return printers;
@@ -25,24 +24,19 @@ impl PlatformActions for crate::Platform {
 
     #[cfg(target_family = "unix")]
     fn print(printer_system_name: &str, file_path: &str, job_name: Option<&str>) ->  Result<(), &'static str> {
-        let result = cups::jobs::print_file(printer_system_name, file_path, job_name);
-        return result;
+        return cups::jobs::print_file(printer_system_name, file_path, job_name);
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
-        let printer_jobs = cups::jobs::get_printer_jobs(printer_name, active_only);
-        let mut jobs = Vec::new();
-        for platform_printer_job in printer_jobs {
-            jobs.push(PrinterJob::from_platform_printer_job_getters(
-                platform_printer_job,
-            ));
-        }
-
-        return jobs;
+        return cups::jobs::get_printer_jobs(printer_name, active_only)
+            .unwrap_or_default()
+            .into_iter()
+            .map(|j|PrinterJob::from_platform_printer_job_getters(j))
+            .collect();
     }
 
     fn get_default_printer() -> Option<Printer> {
-        let dests = get_dests();
+        let dests = get_dests().unwrap_or_default();
         let dest = dests
             .into_iter()
             .find(|d| d.get_is_default())
@@ -53,7 +47,7 @@ impl PlatformActions for crate::Platform {
     }
 
     fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
-        let dests = get_dests();
+        let dests = get_dests().unwrap_or_default();
         let dest = dests
             .into_iter()
             .find(|d| d.get_name() == printer_name || d.get_system_name() == printer_name)

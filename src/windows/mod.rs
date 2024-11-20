@@ -1,10 +1,10 @@
-use crate::common::printer::job::PrinterJob;
-use crate::common::printer::Printer;
+use crate::common::base::{job::PrinterJob, printer::Printer};
 use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
 
 mod winspool;
 
 impl PlatformActions for crate::Platform {
+
     fn get_printers() -> Vec<Printer> {
         let data = winspool::info::enum_printers(None);
 

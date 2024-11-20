@@ -2,7 +2,7 @@
 
 Printers is a simple lib to call printers apis for unix *(cups)* and windows *(winspool)* systems.
 
-Printer can provide a list of printers available on system and send print jobs to theirs
+Printers can provide a list of printers available on the system and send print jobs to them
 
 ## Behavior
 
@@ -68,7 +68,7 @@ fn main() {
 
 ```
 
-## System Requiriments
+## System Requirements
 
 ### Windows
 For Windows printers will be use winspool apis to retrive printers and create jobs with RAW datatypes

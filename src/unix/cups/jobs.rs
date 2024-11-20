@@ -77,17 +77,18 @@ impl PlatformPrinterJobGetters for CupsJobsS {
 /**
  * Return the printer jobs
  */
-pub fn get_printer_jobs(printer_name: &str, active_only: bool) -> &'static [CupsJobsS] {
+pub fn get_printer_jobs(printer_name: &str, active_only: bool) -> Option<&'static [CupsJobsS]> {
     let mut jobs_ptr: *mut CupsJobsS = std::ptr::null_mut();
-
     let whichjobs = if active_only { 0 } else { -1 };
     let name = utils::strings::str_to_cstring(printer_name);
 
-    println!("whichjobs {:?}", whichjobs);
-
     return unsafe {
         let jobs_count = cupsGetJobs(&mut jobs_ptr, name.as_ptr(), 0, whichjobs);
-        slice::from_raw_parts(jobs_ptr, jobs_count as usize)
+        if jobs_count > 0 {
+            Some(slice::from_raw_parts(jobs_ptr, jobs_count as usize))
+        } else {
+            None
+        }
     };
 }
 

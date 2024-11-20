@@ -1,5 +1,10 @@
-use std::{env, fs::{metadata, File}, io::{Read, Write}, path::PathBuf, time::{SystemTime, UNIX_EPOCH}};
+#[cfg(target_family = "unix")]
+use std::{env, fs::File, io::Write, path::PathBuf, time::{SystemTime, UNIX_EPOCH}};
 
+#[cfg(target_family = "windows")]
+use std::{fs::{metadata, File}, io::Read};
+
+#[cfg(target_family = "windows")]
 pub fn get_file_as_bytes(path: &str) -> Option<Vec<u8>> {
     let f = File::open(path);
 
@@ -17,6 +22,7 @@ pub fn get_file_as_bytes(path: &str) -> Option<Vec<u8>> {
     }
 }
 
+#[cfg(target_family = "unix")]
 pub fn save_tmp_file(buffer: &[u8]) -> Option<PathBuf> {
     let time = SystemTime::now()
         .duration_since(UNIX_EPOCH)

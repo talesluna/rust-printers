@@ -156,11 +156,15 @@ impl PlatformPrinterGetters for CupsDestT {
  * Returns a vector of CupsDestT (cups_dest_s) struct with all available destinations
  * Using cupsGetDests
  */
-pub fn get_dests() -> &'static [CupsDestT] {
+pub fn get_dests() -> Option<&'static [CupsDestT]> {
     unsafe {
         let mut dests_ptr: *mut CupsDestT = ptr::null_mut();
         let dests_count: i32 = cupsGetDests(&mut dests_ptr);
-        return slice::from_raw_parts(dests_ptr, dests_count as usize);
+        return if dests_count > 0 {
+            Some(slice::from_raw_parts(dests_ptr, dests_count as usize))
+        } else {
+            None
+        }
     }
 }
 
