@@ -72,7 +72,7 @@ fn main() {
 }
 ```
 
-## System Requiriments
+## System Requirements
 
 ### Windows
 For Windows printers will be use winspool apis to retrive printer and powershell to send a doc to printer
