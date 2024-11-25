@@ -1,12 +1,15 @@
-use std::{fmt::{Debug, Formatter, Error}, time::SystemTime};
+use std::{
+    fmt::{Debug, Error, Formatter},
+    time::SystemTime,
+};
 
-use crate::common::traits::platform::PlatformPrinterJobGetters;
+use crate::common::traits::platform::{PlatformActions, PlatformPrinterJobGetters};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PrinterJobState {
     PENDING,
     PAUSED,
-    PROCCESSING,
+    PROCESSING,
     CANCELLED,
     COMPLETED,
     UNKNOWN,
@@ -16,7 +19,7 @@ pub struct PrinterJob {
     /**
      * Job ID
      */
-    pub id: u32,
+    pub id: u64,
     /**
      * Visual name/title of job
      */
@@ -34,7 +37,7 @@ pub struct PrinterJob {
      */
     pub created_at: SystemTime,
     /**
-     * Date when job was processed or started printing 
+     * Date when job was processed or started printing
      */
     pub processed_at: Option<SystemTime>,
     /**
@@ -48,8 +51,9 @@ pub struct PrinterJob {
 }
 
 impl PrinterJob {
-
-    pub fn from_platform_printer_job_getters(platform_printer_job: &dyn PlatformPrinterJobGetters) -> Self {
+    pub(crate) fn from_platform_printer_job_getters(
+        platform_printer_job: &dyn PlatformPrinterJobGetters,
+    ) -> Self {
         return PrinterJob {
             id: platform_printer_job.get_id(),
             name: platform_printer_job.get_name(),
@@ -59,9 +63,8 @@ impl PrinterJob {
             processed_at: platform_printer_job.get_processed_at(),
             completed_at: platform_printer_job.get_completed_at(),
             printer_name: platform_printer_job.get_printer(),
-        }
+        };
     }
-
 }
 
 impl Debug for PrinterJob {
@@ -91,34 +94,7 @@ impl Debug for PrinterJob {
 }
 
 impl PrinterJobState {
-    
-    pub fn from_platform_state(_platform_state: u32) -> Self {
-        #[cfg(target_family = "unix")] {
-            if _platform_state == 3 {
-                return PrinterJobState::PENDING;
-            }
-            
-            if _platform_state == 4 || _platform_state == 6 {
-                return PrinterJobState::PAUSED;
-            }
-    
-            if _platform_state == 5 {
-                return PrinterJobState::PROCCESSING;
-            }
-    
-            if _platform_state == 7 || _platform_state == 8 {
-                return PrinterJobState::CANCELLED;
-            }
-    
-            if _platform_state == 9 {
-                return PrinterJobState::COMPLETED;
-            }
-
-            return PrinterJobState::UNKNOWN;
-        }
-
-        #[cfg(target_family = "windows")]
-        return PrinterJobState::UNKNOWN;
-
+    pub(crate) fn from_platform_state(platform_state: u64) -> Self {
+        return crate::Platform::parse_printer_job_state(platform_state);
     }
 }

@@ -2,7 +2,7 @@
 use std::fmt::{Debug, Error, Formatter};
 
 use super::job::PrinterJob;
-use crate::common::{utils, traits::platform::{PlatformActions, PlatformPrinterGetters}};
+use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
 
 #[derive(Debug, Clone)]
 pub enum PrinterState {
@@ -131,7 +131,7 @@ impl Clone for Printer {
 }
 
 impl Printer {
-    pub fn from_platform_printer_getters(platform_printer: &dyn PlatformPrinterGetters) -> Printer {
+    pub(crate) fn from_platform_printer_getters(platform_printer: &dyn PlatformPrinterGetters) -> Printer {
         let printer = Printer {
             name: platform_printer.get_name(),
             system_name: platform_printer.get_system_name(),
@@ -154,39 +154,14 @@ impl Printer {
      * Print bytes with self printer instance
      */
     pub fn print(&self, buffer: &[u8], job_name: Option<&str>) -> Result<(), &'static str> {
-        #[cfg(target_family = "unix")] {
-            let path = utils::file::save_tmp_file(buffer);
-            return if path.is_some() {
-                let file_path = path.unwrap();
-                let result = self.print_file(file_path.to_str().unwrap(), job_name);
-                result
-            } else {
-                Err("Failed to create temp file")
-            };
-        }
-
-        #[cfg(target_family = "windows")] {
-            return crate::Platform::print(self.system_name.as_str(), buffer, job_name);
-        }
+        return crate::Platform::print(self.system_name.as_str(), buffer, job_name);
     }
 
     /**
      * Print specific file with self printer instance
      */
     pub fn print_file(&self, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str> {
-
-        #[cfg(target_family = "unix")] {
-            return crate::Platform::print(self.system_name.as_str(), file_path, job_name);
-        }
-
-        #[cfg(target_family = "windows")] {
-            let buffer = utils::file::get_file_as_bytes(file_path);
-            return if buffer.is_some() {
-                crate::Platform::print(self.system_name.as_str(), &buffer.unwrap(), job_name)
-            } else {
-                Err("failed to read file")
-            }
-        }
+        return crate::Platform::print_file(self.system_name.as_str(), file_path, job_name);
     }
     
     /**
@@ -207,40 +182,8 @@ impl Printer {
 
 
 impl PrinterState {
-
-    pub fn from_platform_state(platform_state: &str) -> Self {
-        #[cfg(target_family = "unix")] {
-            if platform_state == "3" {
-                return PrinterState::READY;
-            }
-            
-            if platform_state == "4" {
-                return PrinterState::PRINTING;
-            }
-    
-            if platform_state == "5" {
-                return PrinterState::PAUSED;
-            }
-    
-            return PrinterState::UNKNOWN;
-        }
-
-        #[cfg(target_family = "windows")] {
-            if platform_state == "0" {
-                return PrinterState::READY;
-            }
-        
-            if platform_state == "1" || platform_state == "2" {
-                return PrinterState::PAUSED;
-            }
-        
-            if platform_state == "5" {
-                return PrinterState::PRINTING;
-            }
-        
-            return PrinterState::UNKNOWN;
-        }
+    pub(crate) fn from_platform_state(platform_state: &str) -> Self {
+        return crate::Platform::parse_printer_state(platform_state);
     }
-
 }
 
