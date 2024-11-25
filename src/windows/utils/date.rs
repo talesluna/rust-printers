@@ -45,3 +45,10 @@ pub fn calculate_system_time(
 
     return UNIX_EPOCH + Duration::new(total_seconds.into(), milliseconds as u32 * 1_000_000);
 }
+
+pub fn get_current_epoch() -> u128 {
+    return SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+}

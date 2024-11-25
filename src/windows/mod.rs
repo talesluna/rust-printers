@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::common::base::job::PrinterJobState;
 use crate::common::base::printer::PrinterState;
 use crate::common::base::{job::PrinterJob, printer::Printer};
@@ -35,7 +37,7 @@ impl PlatformActions for crate::Platform {
     ) -> Result<(), &'static str> {
         let buffer = utils::file::get_file_as_bytes(file_path);
         return if buffer.is_some() {
-            let job_name = job_name.unwrap_or(file_path);
+            let job_name = job_name.unwrap_or(Path::new(file_path).file_name().unwrap().to_str().unwrap());
             return Self::print(printer_system_name, &buffer.unwrap(), Some(job_name));
         } else {
             Err("failed to read file")

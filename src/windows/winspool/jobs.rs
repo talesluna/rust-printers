@@ -6,7 +6,7 @@ use std::{ptr, slice};
 use crate::{
     common::traits::platform::PlatformPrinterJobGetters,
     windows::utils::{
-        date::calculate_system_time,
+        date::{calculate_system_time, get_current_epoch},
         memory::alloc_s,
         strings::{str_to_wide_string, wchar_t_to_string},
     },
@@ -162,7 +162,7 @@ pub fn print_buffer(
             return Err("OpenPrinterW failed");
         }
 
-        let mut pDocName = str_to_wide_string(job_name.unwrap_or(""));
+        let mut pDocName = str_to_wide_string(job_name.unwrap_or(get_current_epoch().to_string().as_str()));
         let mut pDatatype = str_to_wide_string("RAW");
 
         let doc_info = DocInfo1 {
