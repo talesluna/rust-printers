@@ -1,33 +1,41 @@
-//! Get printers and print files or bytes on unix and windows
+//! Get printers and send files or bytes to print on unix and windows
 //!
-//! Printers **is not a lib for printer drivers or cups**. Printers is a simple lib to call printers apis for unix *(cups)* and windows *(winspool)* systems.
-//! Printer can provide a list of printers available on the system and perform document printing.
+//! Printers is a simple lib to call printers apis for unix *(cups)* and windows *(winspool)* systems.
+//!
+//! Printers can provide a list of printers available on the system and send print jobs to them
 //!
 //! ```rust
-//! use printers;
+//! use printers::{get_printer_by_name, get_default_printer, get_printers};
 //!
-//! let printers = printers::get_printers();
+//! fn main() {
 //!
-//! for printer in printers {
-//!     let job1 = printer.print("42".as_bytes(), Some("Everything"));
-//!     let job2 = printer.print_file("/path/to/any.file", None);
+//!    // Iterate all available printers
+//!    for printer in get_printers() {
+//!        println!("{:?}", printer);
+//!    }
 //!
-//!     println!("{:?}", printer);
-//!     println!("{:?}", job1);
-//!     println!("{:?}", job2);
+//!    // Get a printer by the name
+//!    let my_printer = get_printer_by_name("my_printer");
+//!    if my_printer.is_some() {
+//!        my_printer.unwrap().print_file("notes.txt", None);
+//!        // Err("cupsPrintFile failed")
+//!    }
+//!
+//!    // Use the default printer
+//!    let default_printer = get_default_printer();
+//!    if default_printer.is_some() {
+//!        default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"));
+//!        // Ok(())
+//!    }
+//!
 //! }
 //! ```
 //!
 //!
-use std::env;
-use std::fs::File;
-use std::io::Write;
-use std::time::{SystemTime, UNIX_EPOCH};
 
+struct Platform;
 
-/// Printer and Job control
-pub mod printer;
-pub mod shared;
+pub mod common;
 
 #[cfg(target_family = "unix")]
 mod unix;
@@ -35,65 +43,25 @@ mod unix;
 #[cfg(target_family = "windows")]
 mod windows;
 
-/**
- * Print bytes on specific printer
- */
-pub fn print(printer_name: &str, buffer: &[u8], job_name: Option<&str>) -> Result<bool, String> {
-    let time = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .subsec_nanos();
-
-    let tmp_file_path = env::temp_dir().join(time.to_string());
-
-    let mut tmp_file = File::create(&tmp_file_path).unwrap();
-    let save = tmp_file.write(buffer);
-
-    if save.is_err() {
-        let error = save.err().unwrap();
-        return Err(error.to_string())
-    }
-
-    return print_file(printer_name, tmp_file_path.to_str().unwrap(), job_name);
-
-}
-
-/**
- * Print specific file on a specific printer
- */
-pub fn print_file(printer_name: &str, file_path: &str, job_name: Option<&str>) -> Result<bool, String> {
-
-    #[cfg(target_family = "unix")]
-    return unix::print(printer_name, file_path, job_name);
-
-    #[cfg(target_family = "windows")]
-    return windows::print(printer_name, file_path, job_name);
-
-}
+use common::{traits::platform::PlatformActions, base::printer::Printer};
 
 /**
  * Return all available printers on system
  */
-pub fn get_printers() -> Vec<printer::Printer> {
-    #[cfg(target_family = "windows")]
-    return windows::get_printers();
-
-    #[cfg(target_family = "unix")]
-    return unix::get_printers();
-
-    #[cfg(target_family = "wasm")]
-    panic!("Unsupported Platform");
+pub fn get_printers() -> Vec<Printer> {
+    return Platform::get_printers();
 }
 
 /**
- * If you known the printer Name you can try get the printer directly from they
+ * If you known the printer nme you can try get the printer directly
  */
-pub fn get_printer_by_name(name: &str) -> Option<printer::Printer> {
-    let printers = get_printers();
+pub fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
+    return Platform::get_printer_by_name(printer_name);
+}
 
-    let opt = printers.iter().find(|&printer| {
-        return printer.clone().name.eq(name) || printer.clone().system_name.eq(name);
-    });
-
-    return opt.cloned();
+/**
+ * Return the default system printer
+ */
+pub fn get_default_printer() -> Option<Printer> {
+    return Platform::get_default_printer();
 }

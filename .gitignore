@@ -2,3 +2,4 @@ target
 demo
 .idea
 .DS_Store
+*.exe
