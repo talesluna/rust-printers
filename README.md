@@ -1,44 +1,62 @@
-# Printers
+# [Printers](https://crates.io/crates/printers): A printing APIs implementation for unix *(cups)* and windows *(winspool)*.
 
-Printers is a simple lib to call printers apis for unix *(cups)* and windows *(winspool)* systems.
+Provides all system printers, create and get print jobs.
 
-Printers can provide a list of printers available on the system and send print jobs to them
+![Crates.io Version](https://img.shields.io/crates/v/printers)
+![Crates.io License](https://img.shields.io/crates/l/printers)
+![docs.rs](https://img.shields.io/docsrs/printers)
+![Crates.io Downloads (recent)](https://img.shields.io/crates/dr/printers)
 
-## Behavior
+## Documentation
+See the references in [docs.rs](https://docs.rs/printers).
 
-> Return a vector of all available printers
+## Features
 
-```rust
-let printers = get_printers(); // -> Vec<Printer>
-```
+|  Target |    API   | List Printers | List jobs | Print bytes and text files | Print PDF,images, etc... |
+|:-------:|:--------:|:-------------:|:---------:|:-----------------------:|:------------------------:|
+| Unix    | cups     |       ✅       |     ✅     |            ✅            |             ✅          |
+| Windows | winspool |       ✅       |     ✅     |            ✅            |             🤔**        |
 
-> Create print job of an byte array
+> ** On Windows this lib use RAW datatype to process printing. Expected output depends of printer firmware.
 
-```rust
-let data = "42".as_bytes();
-printer.print(data); // -> Result<(), &'static str>
-```
+## Examples
 
-> Create print job of an file
-
-```rust
-let path = "my_file/example/path.txt";
-printer.print_file(path); // -> Result<(), &'static str>
-```
-
-> Find printer by the name
+**Get all available printers**
 
 ```rust
-let my_printer = get_printer_by_name("my_printer"); // -> Option<Printer>
-```
+let printers = get_printers();
+// Vec<Printer>
+``` 
 
-> Get the default printer
+**Create print job of an byte array**
 
 ```rust
-let printer = get_default_printer(); // -> Option<Printer>
+printer.print("42".as_bytes());
+// Result<(), &'static str>
 ```
 
-## Example
+**Create print job of an file**
+
+```rust
+printer.print_file("my_file/example/path.txt");
+// Result<(), &'static str>
+```
+
+**Get a printer by name**
+
+```rust
+let my_printer = get_printer_by_name("my_printer");
+// Option<Printer>
+```
+
+**Get the default printer**
+
+```rust
+let printer = get_default_printer();
+// Option<Printer>
+```
+
+**Simple compilation**
 
 ```rust
 use printers::{get_printer_by_name, get_default_printer, get_printers};
@@ -54,7 +72,7 @@ fn main() {
     let my_printer = get_printer_by_name("my_printer");
     if my_printer.is_some() {
         my_printer.unwrap().print_file("notes.txt", None);
-        // Err("cupsPrintFile failed")
+        // Err("") or Ok(())
     }
 
     // Use the default printer
@@ -67,13 +85,3 @@ fn main() {
 }
 
 ```
-
-## System Requirements
-
-### Windows
-For Windows printers will be use winspool apis to retrive printers and create jobs with RAW datatypes
-
-**Note**: For some reasons, printing for complex files like PDF, DOCx and others can`t works as well in many printers. If you want collaborate to implement winspool for printing documents, your contribution will be greatly appreciated
-
-### Unix
-For Unix is necessary cups service installed
