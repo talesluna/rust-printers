@@ -12,7 +12,7 @@ See the references in [docs.rs](https://docs.rs/printers).
 
 ## Features
 
-|  Target |    API   | List Printers | List jobs | Print bytes and text files | Print PDF,images, etc... |
+|  Target |    API   | List printers | List jobs | Print bytes and text files | Print PDF,images, etc... |
 |:-------:|:--------:|:-------------:|:---------:|:-----------------------:|:------------------------:|
 | Unix    | cups     |       ✅       |     ✅     |            ✅            |             ✅          |
 | Windows | winspool |       ✅       |     ✅     |            ✅            |             🤔**        |
