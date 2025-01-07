@@ -2,7 +2,7 @@ use crate::{
     common::traits::platform::PlatformPrinterGetters, unix::utils::strings::c_char_to_string,
 };
 use libc::{c_char, c_int};
-use std::{ffi::CString, iter::FromIterator, ptr, slice};
+use std::{ffi::CString, ptr, slice};
 
 #[link(name = "cups")]
 extern "C" {
@@ -136,8 +136,7 @@ pub fn get_dests() -> Option<&'static [CupsDestT]> {
 pub fn free(dests: &'static [CupsDestT]) {
     if dests.len() > 0 {
         unsafe {
-            let ptr = Box::from_iter(dests).as_ptr();
-            cupsFreeDests(dests.len() as i32, *ptr);
+            cupsFreeDests(dests.len() as i32, dests.as_ptr() as *mut CupsDestT);
         }
     }
 }
