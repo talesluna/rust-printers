@@ -16,7 +16,7 @@ use crate::{
 extern "system" {
     fn OpenPrinterW(
         pPrinterName: *const wchar_t,
-        phPrinter: &*mut c_void,
+        phPrinter: *mut *mut c_void,
         pDefault: *mut PrinterDefaultW,
     ) -> c_int;
     fn StartDocPrinterW(
@@ -171,7 +171,6 @@ pub fn print_buffer(
             pDatatype: pDatatype.as_mut_ptr() as *mut wchar_t,
             pOutputFile: ptr::null_mut(),
         };
-        std::ptr::read_volatile(&printer_handle);
         if StartDocPrinterW(printer_handle, 1, &doc_info) == 0 {
             ClosePrinter(printer_handle);
             return Err("StartDocPrinterW failed");
