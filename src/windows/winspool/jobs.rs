@@ -162,7 +162,8 @@ pub fn print_buffer(
             return Err("OpenPrinterW failed");
         }
 
-        let mut pDocName = str_to_wide_string(job_name.unwrap_or(get_current_epoch().to_string().as_str()));
+        let mut pDocName =
+            str_to_wide_string(job_name.unwrap_or(get_current_epoch().to_string().as_str()));
         let mut pDatatype = str_to_wide_string("RAW");
 
         let doc_info = DocInfo1 {
@@ -170,7 +171,7 @@ pub fn print_buffer(
             pDatatype: pDatatype.as_mut_ptr() as *mut wchar_t,
             pOutputFile: ptr::null_mut(),
         };
-
+        std::ptr::read_volatile(&printer_handle);
         if StartDocPrinterW(printer_handle, 1, &doc_info) == 0 {
             ClosePrinter(printer_handle);
             return Err("StartDocPrinterW failed");
