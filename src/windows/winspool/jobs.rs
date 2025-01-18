@@ -16,7 +16,7 @@ use crate::{
 extern "system" {
     fn OpenPrinterW(
         pPrinterName: *const wchar_t,
-        phPrinter: &*mut c_void,
+        phPrinter: *mut *mut c_void,
         pDefault: *mut PrinterDefaultW,
     ) -> c_int;
     fn StartDocPrinterW(
