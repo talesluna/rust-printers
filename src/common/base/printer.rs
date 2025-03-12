@@ -4,7 +4,7 @@ use std::fmt::{Debug, Error, Formatter};
 use super::job::PrinterJob;
 use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PrinterState {
     READY,
     PAUSED,
@@ -154,14 +154,14 @@ impl Printer {
      * Print bytes with self printer instance
      */
     pub fn print(&self, buffer: &[u8], job_name: Option<&str>) -> Result<(), &'static str> {
-        return crate::Platform::print(self.system_name.as_str(), buffer, job_name);
+        return crate::Platform::print(self, buffer, job_name);
     }
 
     /**
      * Print specific file with self printer instance
      */
     pub fn print_file(&self, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str> {
-        return crate::Platform::print_file(self.system_name.as_str(), file_path, job_name);
+        return crate::Platform::print_file(self, file_path, job_name);
     }
     
     /**

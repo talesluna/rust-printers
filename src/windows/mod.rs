@@ -7,6 +7,7 @@ use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
 
 mod utils;
 mod winspool;
+pub mod ghostscript;
 
 impl PlatformActions for crate::Platform {
     fn get_printers() -> Vec<Printer> {
@@ -23,22 +24,35 @@ impl PlatformActions for crate::Platform {
     }
 
     fn print(
-        printer_system_name: &str,
+        printer: &Printer,
         buffer: &[u8],
         job_name: Option<&str>,
     ) -> Result<(), &'static str> {
-        return winspool::jobs::print_buffer(printer_system_name, job_name, buffer);
+
+        // Try to convert with ghostscript if is available
+        let gs_converted: Option<&[u8]> = ghostscript::try_convert(buffer, &printer.driver_name);
+
+        return winspool::jobs::print_buffer(
+            &printer.system_name,
+            job_name,
+            if gs_converted.is_some() {
+                gs_converted.unwrap()
+            } else {
+                buffer
+            }
+        );
+
     }
 
     fn print_file(
-        printer_system_name: &str,
+        printer: &Printer,
         file_path: &str,
         job_name: Option<&str>,
     ) -> Result<(), &'static str> {
         let buffer = utils::file::get_file_as_bytes(file_path);
         return if buffer.is_some() {
             let job_name = job_name.unwrap_or(Path::new(file_path).file_name().unwrap().to_str().unwrap());
-            return Self::print(printer_system_name, &buffer.unwrap(), Some(job_name));
+            return Self::print(&printer, &buffer.unwrap(), Some(job_name));
         } else {
             Err("failed to read file")
         };

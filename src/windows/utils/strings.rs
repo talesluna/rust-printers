@@ -19,3 +19,8 @@ pub fn wchar_t_to_string(value: *const wchar_t) -> String {
 pub fn str_to_wide_string(value: &str) -> Vec<u16> {
     return value.encode_utf16().chain(Some(0)).collect();
 }
+
+pub fn str_to_wide_string_ptr(value: &str) -> *const u16 {
+    let result = str_to_wide_string(value);
+    return result.as_ptr();
+}

@@ -45,6 +45,11 @@ mod windows;
 
 use common::{traits::platform::PlatformActions, base::printer::Printer};
 
+#[cfg(target_family = "windows")]
+pub fn use_ghostscript_dll(dll_path: &str) {
+    windows::ghostscript::GS_DLL_PATH.set(dll_path.to_string()).unwrap();
+}
+
 /**
  * Return all available printers on system
  */
@@ -53,7 +58,7 @@ pub fn get_printers() -> Vec<Printer> {
 }
 
 /**
- * If you known the printer nme you can try get the printer directly
+ * If you have known the printer nme you can try to get the printer directly
  */
 pub fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
     return Platform::get_printer_by_name(printer_name);

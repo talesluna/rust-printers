@@ -5,7 +5,7 @@ use std::{ptr, slice};
 
 use crate::{
     common::traits::platform::PlatformPrinterGetters,
-    windows::utils::{memory::{alloc_s, dealloc_s}, strings::{str_to_wide_string, wchar_t_to_string}}
+    windows::utils::{memory::{alloc_s, dealloc_s}, strings::{str_to_wide_string_ptr, wchar_t_to_string}}
 };
 
 #[link(name = "winspool")]
@@ -110,7 +110,7 @@ pub fn enum_printers(name: Option<&str>) -> &'static [PRINTER_INFO_2W] {
     let name_ptr = if name.is_none() {
         ptr::null_mut()
     } else {
-        str_to_wide_string(name.unwrap()).as_ptr()
+        str_to_wide_string_ptr(name.unwrap())
     } as *const wchar_t;
 
     for _ in 0..2 {

@@ -26,25 +26,25 @@ impl PlatformActions for crate::Platform {
     }
 
     fn print(
-        printer_system_name: &str,
+        printer: &Printer,
         buffer: &[u8],
         job_name: Option<&str>,
     ) -> Result<(), &'static str> {
-        let path = crate::unix::utils::file::save_tmp_file(buffer);
+        let path = crate::common::utils::file::save_tmp_file(buffer);
         return if path.is_some() {
             let file_path = path.unwrap();
-            return Self::print_file(printer_system_name, file_path.to_str().unwrap(), job_name);
+            return Self::print_file(&printer, file_path.to_str().unwrap(), job_name);
         } else {
             Err("Failed to create temp file")
         };
     }
 
     fn print_file(
-        printer_system_name: &str,
+        printer: &Printer,
         file_path: &str,
         job_name: Option<&str>,
     ) -> Result<(), &'static str> {
-        return cups::jobs::print_file(printer_system_name, file_path, job_name);
+        return cups::jobs::print_file(&printer.system_name, file_path, job_name);
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
