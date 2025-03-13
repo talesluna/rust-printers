@@ -86,6 +86,10 @@ impl PlatformPrinterGetters for PRINTER_INFO_2W {
     fn get_state(&self) -> String {
         return self.Status.to_string();
     }
+    fn get_state_reasons(&self) -> Vec<String> {
+        // TODO: Implement
+        return vec![];
+    }
     fn get_port_name(&self) -> String {
         return wchar_t_to_string(self.pPortName);
     }

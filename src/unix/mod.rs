@@ -4,7 +4,7 @@ use std::str;
 use crate::common::{
     base::{
         job::{PrinterJob, PrinterJobState},
-        printer::{Printer, PrinterState},
+        printer::{Printer, PrinterState, PrinterStateReason},
     },
     traits::platform::{PlatformActions, PlatformPrinterGetters},
 };
@@ -91,6 +91,20 @@ impl PlatformActions for crate::Platform {
         }
 
         return PrinterState::UNKNOWN;
+    }
+
+    fn parse_printer_state_reasons(platform_state_reasons: Vec<String>) -> Vec<PrinterStateReason> {
+        let mut vec_printer_state_reasons = Vec::new();
+        
+        // TODO: implement other status
+        // https://www.rfc-editor.org/rfc/rfc2911#section-4.4.12
+        // https://stackoverflow.com/questions/44687154/more-complete-list-of-cups-printer-state-reasons
+        
+        if platform_state_reasons.contains(&"offline-report".to_string()) {
+            vec_printer_state_reasons.push(PrinterStateReason::OFFLINE);
+        }
+
+        return vec_printer_state_reasons;
     }
 
     fn parse_printer_job_state(platform_state: u64) -> PrinterJobState {

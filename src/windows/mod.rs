@@ -88,6 +88,11 @@ impl PlatformActions for crate::Platform {
 
         return PrinterState::UNKNOWN;
     }
+    
+    fn parse_printer_state_reasons(platform_state_reasons: Vec<String>) -> Vec<PrinterStateReason> {
+        // TODO: Implement. Refer https://learn.microsoft.com/en-us/windows/win32/printdocs/printer-info-6#members
+        return vec![];
+    }
 
     fn parse_printer_job_state(platform_state: u64) -> PrinterJobState {
         if platform_state == 32
