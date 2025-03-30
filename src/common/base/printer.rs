@@ -12,6 +12,12 @@ pub enum PrinterState {
     UNKNOWN,
 }
 
+
+#[derive(Debug, Clone)]
+pub enum PrinterStateReason {
+    OFFLINE,
+}
+
 /**
  * Printer is a struct to representation the system printer
  */
@@ -75,6 +81,11 @@ pub struct Printer {
      * The state of the printer
      */
     pub state: PrinterState,
+
+    /**
+     * The state reasons of the printer
+     */
+    pub state_reasons: Vec<PrinterStateReason>,
 }
 
 impl Debug for Printer {
@@ -84,6 +95,7 @@ impl Debug for Printer {
             "Printer {{
                 \r  name: {:?},
                 \r  state: {:?},
+                \r  state_reasons: {:?},
                 \r  system_name: {:?},
                 \r  is_default: {:?},
                 \r  uri: {:?},
@@ -97,6 +109,7 @@ impl Debug for Printer {
             \r}}",
             self.name,
             self.state,
+            self.state_reasons,
             self.system_name,
             self.is_default,
             self.uri,
@@ -116,6 +129,7 @@ impl Clone for Printer {
         return Printer {
             name: self.name.clone(),
             state: self.state.clone(),
+            state_reasons: self.state_reasons.clone(),
             uri: self.uri.clone(),
             location: self.location.clone(),
             port_name: self.port_name.clone(),
@@ -145,6 +159,7 @@ impl Printer {
             processor: platform_printer.get_processor(),
             description: platform_printer.get_description(),
             state: PrinterState::from_platform_state(platform_printer.get_state().as_str()),
+            state_reasons: PrinterStateReason::from_platform_state(platform_printer.get_state_reasons()),
         };
 
         return printer;
@@ -184,6 +199,12 @@ impl Printer {
 impl PrinterState {
     pub(crate) fn from_platform_state(platform_state: &str) -> Self {
         return crate::Platform::parse_printer_state(platform_state);
+    }
+}
+
+impl PrinterStateReason {
+    pub(crate) fn from_platform_state(platform_state: Vec<String>) -> Vec<Self> {
+        return crate::Platform::parse_printer_state_reasons(platform_state);
     }
 }
 
