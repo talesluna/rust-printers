@@ -93,12 +93,12 @@ impl PlatformPrinterGetters for CupsDestT {
         return self.get_option("printer-location");
     }
 
-    fn get_state(&self) -> String {
-        return self.get_option("printer-state");
+    fn get_state(&self) -> u64 {
+        return self.get_option("printer-state").parse::<u64>().unwrap_or_default();
     }
 
-    fn get_state_reasons(&self) -> Vec<String> {
-        return self.get_option("printer-state-reasons").split(',').map(|x| x.to_string()).collect();
+    fn get_state_reasons(&self) -> String {
+        return self.get_option("printer-state-reasons");
     }
 
     fn get_port_name(&self) -> String {

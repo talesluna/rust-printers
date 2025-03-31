@@ -83,12 +83,8 @@ impl PlatformPrinterGetters for PRINTER_INFO_2W {
     fn get_location(&self) -> String {
         return wchar_t_to_string(self.pLocation);
     }
-    fn get_state(&self) -> String {
-        return self.Status.to_string();
-    }
-    fn get_state_reasons(&self) -> Vec<String> {
-        // TODO: Implement
-        return vec![];
+    fn get_state(&self) -> u64 {
+        return self.Status as u64;
     }
     fn get_port_name(&self) -> String {
         return wchar_t_to_string(self.pPortName);
@@ -102,6 +98,30 @@ impl PlatformPrinterGetters for PRINTER_INFO_2W {
     fn get_data_type(&self) -> String {
         return wchar_t_to_string(self.pDatatype);
     }
+    fn get_state_reasons(&self) -> String {
+
+        // NOTE: This reasons are virtual descriptions of printer status
+        let mut reasons: Vec<&str> = Vec::new();
+
+        if self.Status & 0x00000080 != 0 {
+            reasons.push("offline");
+        }
+        if self.Status & 0x00000010 != 0 {
+            reasons.push("paper_out");
+        }
+        if self.Status & 0x00000001 != 0 {
+            reasons.push("paused");
+        }
+        if self.Status & 0x00000002 != 0 {
+            reasons.push("error");
+        }
+
+        if reasons.is_empty() {
+            reasons.push("none");
+        }
+        
+        return reasons.join(",");
+    }
 }
 
 /**
@@ -114,7 +134,8 @@ pub fn enum_printers(name: Option<&str>) -> &'static [PRINTER_INFO_2W] {
     let name_ptr = if name.is_none() {
         ptr::null_mut()
     } else {
-        str_to_wide_string(name.unwrap()).as_ptr()
+        let value = str_to_wide_string(name.unwrap());
+        value.as_ptr()
     } as *const wchar_t;
 
     for _ in 0..2 {

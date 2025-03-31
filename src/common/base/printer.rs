@@ -7,15 +7,10 @@ use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
 #[derive(Debug, Clone)]
 pub enum PrinterState {
     READY,
+    OFFLINE,
     PAUSED,
     PRINTING,
     UNKNOWN,
-}
-
-
-#[derive(Debug, Clone)]
-pub enum PrinterStateReason {
-    OFFLINE,
 }
 
 /**
@@ -85,7 +80,7 @@ pub struct Printer {
     /**
      * The state reasons of the printer
      */
-    pub state_reasons: Vec<PrinterStateReason>,
+    pub state_reasons: Vec<String>,
 }
 
 impl Debug for Printer {
@@ -146,6 +141,9 @@ impl Clone for Printer {
 
 impl Printer {
     pub(crate) fn from_platform_printer_getters(platform_printer: &dyn PlatformPrinterGetters) -> Printer {
+
+        let state_reasons = platform_printer.get_state_reasons();
+
         let printer = Printer {
             name: platform_printer.get_name(),
             system_name: platform_printer.get_system_name(),
@@ -158,8 +156,8 @@ impl Printer {
             data_type: platform_printer.get_data_type(),
             processor: platform_printer.get_processor(),
             description: platform_printer.get_description(),
-            state: PrinterState::from_platform_state(platform_printer.get_state().as_str()),
-            state_reasons: PrinterStateReason::from_platform_state(platform_printer.get_state_reasons()),
+            state: PrinterState::from_platform_state(platform_printer.get_state(), state_reasons.as_str()),
+            state_reasons: state_reasons.split(",").map(|v| v.to_string()).collect()
         };
 
         return printer;
@@ -197,14 +195,8 @@ impl Printer {
 
 
 impl PrinterState {
-    pub(crate) fn from_platform_state(platform_state: &str) -> Self {
-        return crate::Platform::parse_printer_state(platform_state);
-    }
-}
-
-impl PrinterStateReason {
-    pub(crate) fn from_platform_state(platform_state: Vec<String>) -> Vec<Self> {
-        return crate::Platform::parse_printer_state_reasons(platform_state);
+    pub(crate) fn from_platform_state(platform_state: u64, state_reasons: &str) -> Self {
+        return crate::Platform::parse_printer_state(platform_state, state_reasons);
     }
 }
 
