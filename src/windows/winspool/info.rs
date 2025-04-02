@@ -98,29 +98,45 @@ impl PlatformPrinterGetters for PRINTER_INFO_2W {
     fn get_data_type(&self) -> String {
         return wchar_t_to_string(self.pDatatype);
     }
-    fn get_state_reasons(&self) -> String {
-
-        // NOTE: This reasons are virtual descriptions of printer status
-        let mut reasons: Vec<&str> = Vec::new();
-
-        if self.Status & 0x00000080 != 0 {
-            reasons.push("offline");
-        }
-        if self.Status & 0x00000010 != 0 {
-            reasons.push("paper_out");
-        }
-        if self.Status & 0x00000001 != 0 {
-            reasons.push("paused");
-        }
-        if self.Status & 0x00000002 != 0 {
-            reasons.push("error");
-        }
+    fn get_state_reasons(&self) -> Vec<String> {
+        // NOTE: These reasons are virtual descriptions based on printer status
+        let mut reasons: Vec<String> = [
+            (0x00000000, "ready"),
+            (0x00000001, "paused"),
+            (0x00000002, "error"),
+            (0x00000004, "pending_deletion"),
+            (0x00000008, "paper_jam"),
+            (0x00000010, "paper_out"),
+            (0x00000020, "manual_feed"),
+            (0x00000040, "paper_problem"),
+            (0x00000080, "offline"),
+            (0x00000100, "io_active"),
+            (0x00000200, "busy"),
+            (0x00000400, "printing"),
+            (0x00000800, "output_bin_full"),
+            (0x00001000, "not_available"),
+            (0x00002000, "waiting"),
+            (0x00004000, "processing"),
+            (0x00008000, "initializing"),
+            (0x00010000, "warming_up"),
+            (0x00020000, "toner_low"),
+            (0x00040000, "no_toner"),
+            (0x00080000, "page_punt"),
+            (0x00100000, "user_intervention"),
+            (0x00200000, "out_of_memory"),
+            (0x00400000, "door_open"),
+            (0x00800000, "server_unknown"),
+            (0x01000000, "power_save"),
+        ].iter()
+            .filter(|v| self.Status & v.0 != 0)
+            .map(|v| v.1.to_string())
+            .collect();
 
         if reasons.is_empty() {
-            reasons.push("none");
+            reasons.push("none".to_string());
         }
-        
-        return reasons.join(",");
+
+        return reasons;
     }
 }
 

@@ -144,7 +144,7 @@ impl Printer {
 
         let state_reasons = platform_printer.get_state_reasons();
 
-        let printer = Printer {
+        return Printer {
             name: platform_printer.get_name(),
             system_name: platform_printer.get_system_name(),
             driver_name: platform_printer.get_marker_and_model(),
@@ -156,11 +156,9 @@ impl Printer {
             data_type: platform_printer.get_data_type(),
             processor: platform_printer.get_processor(),
             description: platform_printer.get_description(),
-            state: PrinterState::from_platform_state(platform_printer.get_state(), state_reasons.as_str()),
-            state_reasons: state_reasons.split(",").map(|v| v.to_string()).collect()
+            state: PrinterState::from_platform_state(platform_printer.get_state(), state_reasons.join(",").as_str()),
+            state_reasons
         };
-
-        return printer;
     }
 
     /**
@@ -199,4 +197,3 @@ impl PrinterState {
         return crate::Platform::parse_printer_state(platform_state, state_reasons);
     }
 }
-

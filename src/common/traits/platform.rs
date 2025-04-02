@@ -13,7 +13,7 @@ pub trait PlatformPrinterGetters {
     fn get_uri(&self) -> String;
     fn get_location(&self) -> String;
     fn get_state(&self) -> u64;
-    fn get_state_reasons(&self) -> String;
+    fn get_state_reasons(&self) -> Vec<String>;
     fn get_port_name(&self) -> String;
     fn get_processor(&self) -> String;
     fn get_description(&self) -> String;

@@ -75,15 +75,15 @@ impl PlatformActions for crate::Platform {
 
     fn parse_printer_state(platform_state: u64, state_reasons: &str) -> PrinterState {
 
-        if state_reasons.contains("offline") {
+        if state_reasons.contains("offline") || state_reasons.contains("pending_deletion") {
             return PrinterState::OFFLINE;
         }
 
         match platform_state {
-            0 => PrinterState::READY,
-            1 | 3 => PrinterState::PAUSED,  
-            2 => PrinterState::PRINTING,
-            128 => PrinterState::OFFLINE,
+            s if s == 0 || s & (0x00000100 | 0x00004000) != 0 => PrinterState::READY,
+            s if s & 0x00000400 != 0 => PrinterState::PRINTING,
+            s if s & (0x00000001 | 0x00000002 | 0x00000008 | 0x00000010 | 0x00000020) != 0 => PrinterState::PAUSED,
+            s if s & (0x00000080 | 0x00400000 | 0x00001000 | 0x00000004) != 0 => PrinterState::OFFLINE,
             _ => PrinterState::UNKNOWN,
         }
     }
