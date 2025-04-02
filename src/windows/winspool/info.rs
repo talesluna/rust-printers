@@ -100,7 +100,7 @@ impl PlatformPrinterGetters for PRINTER_INFO_2W {
     }
     fn get_state_reasons(&self) -> Vec<String> {
         // NOTE: These reasons are virtual descriptions based on printer status
-        let mut reasons: Vec<String> = [
+        return [
             (0x00000000, "ready"),
             (0x00000001, "paused"),
             (0x00000002, "error"),
@@ -131,12 +131,6 @@ impl PlatformPrinterGetters for PRINTER_INFO_2W {
             .filter(|v| self.Status & v.0 != 0)
             .map(|v| v.1.to_string())
             .collect();
-
-        if reasons.is_empty() {
-            reasons.push("none".to_string());
-        }
-
-        return reasons;
     }
 }
 

@@ -48,8 +48,7 @@ impl CupsDestT {
         if !self.options.is_null() && key.is_ok() {
             let option_key = key.unwrap();
             unsafe {
-                let option_value =
-                    cupsGetOption(option_key.as_ptr(), self.num_options, self.options);
+                let option_value = cupsGetOption(option_key.as_ptr(), self.num_options, self.options);
                 if !option_value.is_null() {
                     value = c_char_to_string(option_value);
                 }
@@ -57,10 +56,6 @@ impl CupsDestT {
         }
 
         return value;
-    }
-
-    pub fn is_shared_duplex(&self) -> bool {
-        return self.num_options == 5;
     }
 }
 
@@ -98,7 +93,11 @@ impl PlatformPrinterGetters for CupsDestT {
     }
 
     fn get_state_reasons(&self) -> Vec<String> {
-        return self.get_option("printer-state-reasons").split(",").map(|v| v.to_string()).collect();
+        return self
+            .get_option("printer-state-reasons")
+            .split(",")
+            .filter_map(|v| if v.is_empty() { None } else { Some(v.to_string()) })
+            .collect();
     }
 
     fn get_port_name(&self) -> String {

@@ -17,7 +17,6 @@ impl PlatformActions for crate::Platform {
         let dests = cups::dests::get_dests().unwrap_or_default();
         let printers = dests
             .into_iter()
-            .filter(|p| !p.is_shared_duplex())
             .map(|p| Printer::from_platform_printer_getters(p))
             .collect();
 
@@ -92,26 +91,13 @@ impl PlatformActions for crate::Platform {
     }
 
     fn parse_printer_job_state(platform_state: u64) -> PrinterJobState {
-        if platform_state == 3 {
-            return PrinterJobState::PENDING;
+        match platform_state {            
+            3  => PrinterJobState::PENDING,
+            4 | 6  => PrinterJobState::PAUSED,
+            5  => PrinterJobState::PROCESSING,
+            7 | 8  => PrinterJobState::CANCELLED,
+            9  => PrinterJobState::COMPLETED,
+            _ => PrinterJobState::UNKNOWN,
         }
-
-        if platform_state == 4 || platform_state == 6 {
-            return PrinterJobState::PAUSED;
-        }
-
-        if platform_state == 5 {
-            return PrinterJobState::PROCESSING;
-        }
-
-        if platform_state == 7 || platform_state == 8 {
-            return PrinterJobState::CANCELLED;
-        }
-
-        if platform_state == 9 {
-            return PrinterJobState::COMPLETED;
-        }
-
-        return PrinterJobState::UNKNOWN;
     }
 }

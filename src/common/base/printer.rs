@@ -142,7 +142,11 @@ impl Clone for Printer {
 impl Printer {
     pub(crate) fn from_platform_printer_getters(platform_printer: &dyn PlatformPrinterGetters) -> Printer {
 
-        let state_reasons = platform_printer.get_state_reasons();
+        let mut state_reasons = platform_printer.get_state_reasons();
+
+        if state_reasons.is_empty() {
+            state_reasons.push("none".to_string());
+        }
 
         return Printer {
             name: platform_printer.get_name(),
