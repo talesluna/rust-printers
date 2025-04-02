@@ -1,6 +1,7 @@
 use cups::dests::get_dests;
 use std::str;
 
+use crate::common::base::get_printers_options::GetPrintersOptions;
 use crate::common::{
     base::{
         job::{PrinterJob, PrinterJobState},
@@ -14,10 +15,14 @@ mod utils;
 
 impl PlatformActions for crate::Platform {
     fn get_printers() -> Vec<Printer> {
+        Self::get_printers_with_opt(GetPrintersOptions::default())
+    }
+
+    fn get_printers_with_opt(options: GetPrintersOptions) -> Vec<Printer> {
         let dests = cups::dests::get_dests().unwrap_or_default();
         let printers = dests
             .into_iter()
-            .filter(|p| !p.is_shared_duplex())
+            .filter(|p| !options.exclude_shared_duplex_printer || !p.is_shared_duplex())
             .map(|p| Printer::from_platform_printer_getters(p))
             .collect();
 

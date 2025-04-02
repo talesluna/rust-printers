@@ -1,5 +1,6 @@
 use std::path::Path;
 
+use crate::common::base::get_printers_options::GetPrintersOptions;
 use crate::common::base::job::PrinterJobState;
 use crate::common::base::printer::PrinterState;
 use crate::common::base::{job::PrinterJob, printer::Printer};
@@ -10,10 +11,15 @@ mod winspool;
 
 impl PlatformActions for crate::Platform {
     fn get_printers() -> Vec<Printer> {
+        Self::get_printers_with_opt(GetPrintersOptions::default())
+    }
+
+    fn get_printers_with_opt(options: GetPrintersOptions) -> Vec<Printer> {
         let data = winspool::info::enum_printers(None);
 
         let printers: Vec<Printer> = data
             .iter()
+            // TODO: Support exclude_shared_duplex_printer
             .filter(|p| !p.pPrinterName.is_null())
             .map(|p| Printer::from_platform_printer_getters(p))
             .collect();

@@ -1,3 +1,4 @@
+use crate::common::base::get_printers_options::GetPrintersOptions;
 use std::time::SystemTime;
 use crate::common::base::{job::PrinterJobState, printer::{Printer, PrinterState}};
 
@@ -28,6 +29,7 @@ pub trait PlatformPrinterJobGetters {
 }
 
 pub trait PlatformActions {
+    fn get_printers_with_opt(options: GetPrintersOptions) -> Vec<Printer>;
     fn get_printers() -> Vec<Printer>;
     fn print(printer_system_name: &str, buffer: &[u8], job_name: Option<&str>) -> Result<(), &'static str>;    
     fn print_file(printer_system_name: &str, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str>;
