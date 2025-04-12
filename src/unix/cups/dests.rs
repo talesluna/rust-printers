@@ -5,10 +5,10 @@ use libc::{c_char, c_int};
 use std::{ffi::CString, ptr, slice};
 
 #[link(name = "cups")]
-extern "C" {
-    fn cupsGetDests(dests: *mut *mut CupsDestT) -> c_int;
-    fn cupsFreeDests(num_dests: c_int, dests: *const CupsDestT);
-    fn cupsGetOption(
+unsafe extern "C" {
+    unsafe fn cupsGetDests(dests: *mut *mut CupsDestT) -> c_int;
+    unsafe fn cupsFreeDests(num_dests: c_int, dests: *const CupsDestT);
+    unsafe fn cupsGetOption(
         name: *const c_char,
         num_options: c_int,
         options: *mut CupsOptionT,
@@ -56,6 +56,10 @@ impl CupsDestT {
         }
 
         return value;
+    }
+
+    pub fn is_valid(&self) -> bool {
+        return self.num_options != 5 || self.get_state() != 0;
     }
 }
 
