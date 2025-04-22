@@ -113,7 +113,7 @@ pub fn print_file(
     file_path: &str,
     job_name: Option<&str>,
     options: &[(&str, &str)],
-) -> Result<i32, &'static str> {
+) -> Result<u64, &'static str> {
     unsafe {
         let printer = &str_to_cstring(printer_name);
         let filename = str_to_cstring(file_path);
@@ -154,7 +154,7 @@ pub fn print_file(
         if result == 0 {
             Err("cupsPrintFile failed")
         } else {
-            Ok(result)
+            Ok(result as u64)
         }
     }
 }

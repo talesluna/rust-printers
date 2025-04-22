@@ -30,7 +30,7 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         job_name: Option<&str>,
         options: &[(&str, &str)],
-    ) -> Result<i32, &'static str> {
+    ) -> Result<u64, &'static str> {
         let path = crate::unix::utils::file::save_tmp_file(buffer);
         return if path.is_some() {
             let file_path = path.unwrap();
@@ -45,7 +45,7 @@ impl PlatformActions for crate::Platform {
         file_path: &str,
         job_name: Option<&str>,
         options: &[(&str, &str)],
-    ) -> Result<i32, &'static str> {
+    ) -> Result<u64, &'static str> {
         return cups::jobs::print_file(printer_system_name, file_path, job_name, options);
     }
 

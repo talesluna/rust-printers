@@ -149,7 +149,7 @@ pub fn print_buffer(
     job_name: Option<&str>,
     buffer: &[u8],
     _options: &[(&str, &str)], // currently unused
-) -> Result<i32, &'static str> {
+) -> Result<u64, &'static str> {
     unsafe {
         let printer_name = str_to_wide_string(printer_system_name);
         let mut printer_handle: *mut c_void = ptr::null_mut();
@@ -200,11 +200,7 @@ pub fn print_buffer(
             return Err("WritePrinter failed")
         }
 
-        Ok(if job_id <= i32::MAX as u32 {
-            job_id as i32
-        } else {
-            0
-        })
+        Ok(job_id as u64)
     }
 }
 

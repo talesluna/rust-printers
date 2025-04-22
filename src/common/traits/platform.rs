@@ -29,8 +29,8 @@ pub trait PlatformPrinterJobGetters {
 
 pub trait PlatformActions {
     fn get_printers() -> Vec<Printer>;
-    fn print(printer_system_name: &str, buffer: &[u8], job_name: Option<&str>, options: &[(&str, &str)]) -> Result<i32, &'static str>;    
-    fn print_file(printer_system_name: &str, file_path: &str, job_name: Option<&str>, options: &[(&str, &str)]) -> Result<i32, &'static str>;
+    fn print(printer_system_name: &str, buffer: &[u8], job_name: Option<&str>, options: &[(&str, &str)]) -> Result<u64, &'static str>;    
+    fn print_file(printer_system_name: &str, file_path: &str, job_name: Option<&str>, options: &[(&str, &str)]) -> Result<u64, &'static str>;
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<crate::common::base::job::PrinterJob>;
     fn get_default_printer() -> Option<Printer>;
     fn get_printer_by_name(printer_name: &str) -> Option<Printer>;

@@ -153,14 +153,14 @@ impl Printer {
     /**
      * Print bytes with self printer instance
      */
-    pub fn print(&self, buffer: &[u8], job_name: Option<&str>, options: &[(&str, &str)]) -> Result<i32, &'static str> {
+    pub fn print(&self, buffer: &[u8], job_name: Option<&str>, options: &[(&str, &str)]) -> Result<u64, &'static str> {
         return crate::Platform::print(self.system_name.as_str(), buffer, job_name, options);
     }
 
     /**
      * Print specific file with self printer instance
      */
-    pub fn print_file(&self, file_path: &str, job_name: Option<&str>, options: &[(&str, &str)]) -> Result<i32, &'static str> {
+    pub fn print_file(&self, file_path: &str, job_name: Option<&str>, options: &[(&str, &str)]) -> Result<u64, &'static str> {
         return crate::Platform::print_file(self.system_name.as_str(), file_path, job_name, options);
     }
     

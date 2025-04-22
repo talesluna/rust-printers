@@ -27,7 +27,7 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         job_name: Option<&str>,
         options: &[(&str, &str)],
-    ) -> Result<i32, &'static str> {
+    ) -> Result<u64, &'static str> {
         return winspool::jobs::print_buffer(printer_system_name, job_name, buffer, options);
     }
 
@@ -36,7 +36,7 @@ impl PlatformActions for crate::Platform {
         file_path: &str,
         job_name: Option<&str>,
         options: &[(&str, &str)],
-    ) -> Result<i32, &'static str> {
+    ) -> Result<u64, &'static str> {
         let buffer = utils::file::get_file_as_bytes(file_path);
         return if buffer.is_some() {
             let job_name = job_name.unwrap_or(Path::new(file_path).file_name().unwrap().to_str().unwrap());
