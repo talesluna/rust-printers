@@ -107,11 +107,13 @@ pub fn enum_printers(name: Option<&str>) -> &'static [PRINTER_INFO_2W] {
     let mut bytes_needed: c_ulong = 0;
     let mut count_printers: c_ulong = 0;
     let mut buffer_ptr: *mut PRINTER_INFO_2W = ptr::null_mut();
-    let name_ptr = if name.is_none() {
-        ptr::null_mut()
-    } else {
-        str_to_wide_string(name.unwrap()).as_ptr()
-    } as *const wchar_t;
+
+    // Store wide name in a variable so it lives long enough
+    let name_wide: Option<Vec<u16>> = name.map(str_to_wide_string);
+    let name_ptr = match &name_wide {
+        Some(vec) => vec.as_ptr(),
+        None => ptr::null(),
+    };
 
     for _ in 0..2 {
         let result = unsafe {

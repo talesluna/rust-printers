@@ -148,7 +148,7 @@ pub fn print_buffer(
     printer_system_name: &str,
     job_name: Option<&str>,
     buffer: &[u8],
-    options: &[(&str, &str)], // currently unused
+    _options: &[(&str, &str)], // currently unused
 ) -> Result<i32, &'static str> {
     unsafe {
         let printer_name = str_to_wide_string(printer_system_name);
@@ -172,7 +172,8 @@ pub fn print_buffer(
             pOutputFile: ptr::null_mut(),
         };
 
-        if StartDocPrinterW(printer_handle, 1, &doc_info) == 0 {
+        let job_id = StartDocPrinterW(printer_handle, 1, &doc_info);
+        if job_id == 0 {
             ClosePrinter(printer_handle);
             return Err("StartDocPrinterW failed");
         }
@@ -196,14 +197,14 @@ pub fn print_buffer(
         ClosePrinter(printer_handle);
 
         if write_result == 0 {
-            return Err("WritePrinter failed");
+            return Err("WritePrinter failed")
         }
 
-        if write_result == 0 {
-            Err("WritePrinter failed")
+        Ok(if job_id <= i32::MAX as u32 {
+            job_id as i32
         } else {
-            Ok(result)
-        }
+            0
+        })
     }
 }
 

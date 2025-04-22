@@ -17,18 +17,23 @@
 //!    // Get a printer by the name
 //!    let my_printer = get_printer_by_name("my_printer");
 //!    if my_printer.is_some() {
-//!        my_printer.unwrap().print_file("notes.txt", None);
-//!        // Err("cupsPrintFile failed")
+//!        my_printer.unwrap().print_file("notes.txt", None, &[]);
+//!        // Err("cupsPrintFile failed") or Ok(())
 //!    }
 //!
 //!    // Use the default printer
 //!    let default_printer = get_default_printer();
 //!    if default_printer.is_some() {
-//!        default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"));
+//!        // options are currently UNIX-only. see https://www.cups.org/doc/options.html
+//!        let options = [
+//!            ("document-format", "application/vnd.cups-raw"),
+//!            ("copies", "2"),
+//!        ];
+//!        default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"), &options);
 //!        // Ok(())
-//!    }
+//!   }
 //!
-//! }
+//!}
 //! ```
 //!
 //!
@@ -72,7 +77,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_cups_options() {
+    fn test_zpl_with_cups_options() {
         //println!("{:?}", get_printers());
         let printer = get_printer_by_name("Zebra Technologies ZTC ZD410-203dpi ZPL").unwrap();
         let zpl = "^XA~TA000~JSN^LT0^MNW^MTD^PON^PMN^LH0,0^JMA^PR6,6~SD15^JUS^LRN^CI27^XZ
@@ -89,6 +94,33 @@ mod tests {
             ("document-format", "application/vnd.cups-raw"),
             ("copies", "2"),
         ];
+        let job_id = printer.print(zpl.as_bytes(), Some("My ZPL Job"), &options);
+        println!("Job ID: {:?}", job_id);
+        // println!("{:?}", printer.get_job_history());
+        assert!(job_id.is_ok());
+    }
+}
+
+#[cfg(target_family = "windows")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_zpl_with_win_options() {
+        //println!("{:?}", get_printers());
+        let printer = get_printer_by_name("Microsoft Print to PDF").unwrap();
+        let zpl = "^XA~TA000~JSN^LT0^MNW^MTD^PON^PMN^LH0,0^JMA^PR6,6~SD15^JUS^LRN^CI27^XZ
+^XA
+^MMT
+^PW399
+^LL0216
+^LS0
+^FT50,85^A0N,24,20^FH^FDID: 1234^FS
+^FT50,60^A0N,24,20^FH^FDLast name: Doe^FS
+^FT50,35^A0N,24,20^FH^FDFirst name: John^FS
+^PQ1,0,1,Y^XZ";
+        let options = []; // currently no options are supported with Windows
         let job_id = printer.print(zpl.as_bytes(), Some("My ZPL Job"), &options);
         println!("Job ID: {:?}", job_id);
         // println!("{:?}", printer.get_job_history());
