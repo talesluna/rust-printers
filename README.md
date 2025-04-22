@@ -31,15 +31,15 @@ let printers = get_printers();
 **Create print job of an byte array**
 
 ```rust
-printer.print("42".as_bytes());
-// Result<(), &'static str>
+let job_id = printer.print("42".as_bytes(), None, &[]);
+// Result<ia32, &'static str>
 ```
 
 **Create print job of an file**
 
 ```rust
-printer.print_file("my_file/example/path.txt");
-// Result<(), &'static str>
+let job_id = printer.print_file("my_file/example/path.txt", None, &[]);
+// Result<ia32, &'static str>
 ```
 
 **Get a printer by name**
@@ -71,14 +71,19 @@ fn main() {
     // Get a printer by the name
     let my_printer = get_printer_by_name("my_printer");
     if my_printer.is_some() {
-        my_printer.unwrap().print_file("notes.txt", None);
+        my_printer.unwrap().print_file("notes.txt", None, &[]);
         // Err("") or Ok(())
     }
 
     // Use the default printer
     let default_printer = get_default_printer();
     if default_printer.is_some() {
-        default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"));
+        // options are currently UNIX-only. see https://www.cups.org/doc/options.html
+        let options = [
+            ("document-format", "application/vnd.cups-raw"),
+            ("copies", "2"),
+        ];
+        default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"), &options);
         // Ok(())
     }
 
