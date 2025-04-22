@@ -32,14 +32,14 @@ let printers = get_printers();
 
 ```rust
 let job_id = printer.print("42".as_bytes(), None, &[]);
-// Result<ia32, &'static str>
+// Result<u64, &'static str>
 ```
 
 **Create print job of an file**
 
 ```rust
 let job_id = printer.print_file("my_file/example/path.txt", None, &[]);
-// Result<ia32, &'static str>
+// Result<u64, &'static str>
 ```
 
 **Get a printer by name**
