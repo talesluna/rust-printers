@@ -26,19 +26,21 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         buffer: &[u8],
         job_name: Option<&str>,
-    ) -> Result<(), &'static str> {
-        return winspool::jobs::print_buffer(printer_system_name, job_name, buffer);
+        options: &[(&str, &str)],
+    ) -> Result<i32, &'static str> {
+        return winspool::jobs::print_buffer(printer_system_name, job_name, buffer, options);
     }
 
     fn print_file(
         printer_system_name: &str,
         file_path: &str,
         job_name: Option<&str>,
-    ) -> Result<(), &'static str> {
+        options: &[(&str, &str)],
+    ) -> Result<i32, &'static str> {
         let buffer = utils::file::get_file_as_bytes(file_path);
         return if buffer.is_some() {
             let job_name = job_name.unwrap_or(Path::new(file_path).file_name().unwrap().to_str().unwrap());
-            return Self::print(printer_system_name, &buffer.unwrap(), Some(job_name));
+            return Self::print(printer_system_name, &buffer.unwrap(), Some(job_name), options);
         } else {
             Err("failed to read file")
         };

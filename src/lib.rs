@@ -65,3 +65,33 @@ pub fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
 pub fn get_default_printer() -> Option<Printer> {
     return Platform::get_default_printer();
 }
+
+#[cfg(target_family = "unix")]
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cups_options() {
+        //println!("{:?}", get_printers());
+        let printer = get_printer_by_name("Zebra Technologies ZTC ZD410-203dpi ZPL").unwrap();
+        let zpl = "^XA~TA000~JSN^LT0^MNW^MTD^PON^PMN^LH0,0^JMA^PR6,6~SD15^JUS^LRN^CI27^XZ
+^XA
+^MMT
+^PW399
+^LL0216
+^LS0
+^FT50,85^A0N,24,20^FH^FDID: 1234^FS
+^FT50,60^A0N,24,20^FH^FDLast name: Doe^FS
+^FT50,35^A0N,24,20^FH^FDFirst name: John^FS
+^PQ1,0,1,Y^XZ";
+        let options = [
+            ("document-format", "application/vnd.cups-raw"),
+            ("copies", "2"),
+        ];
+        let job_id = printer.print(zpl.as_bytes(), Some("My ZPL Job"), &options);
+        println!("Job ID: {:?}", job_id);
+        // println!("{:?}", printer.get_job_history());
+        assert!(job_id.is_ok());
+    }
+}

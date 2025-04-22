@@ -148,7 +148,8 @@ pub fn print_buffer(
     printer_system_name: &str,
     job_name: Option<&str>,
     buffer: &[u8],
-) -> Result<(), &'static str> {
+    options: &[(&str, &str)], // currently unused
+) -> Result<i32, &'static str> {
     unsafe {
         let printer_name = str_to_wide_string(printer_system_name);
         let mut printer_handle: *mut c_void = ptr::null_mut();
@@ -197,9 +198,13 @@ pub fn print_buffer(
         if write_result == 0 {
             return Err("WritePrinter failed");
         }
-    }
 
-    return Ok(());
+        if write_result == 0 {
+            Err("WritePrinter failed")
+        } else {
+            Ok(result)
+        }
+    }
 }
 
 /**

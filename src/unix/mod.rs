@@ -29,11 +29,12 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         buffer: &[u8],
         job_name: Option<&str>,
-    ) -> Result<(), &'static str> {
+        options: &[(&str, &str)],
+    ) -> Result<i32, &'static str> {
         let path = crate::unix::utils::file::save_tmp_file(buffer);
         return if path.is_some() {
             let file_path = path.unwrap();
-            return Self::print_file(printer_system_name, file_path.to_str().unwrap(), job_name);
+            return Self::print_file(printer_system_name, file_path.to_str().unwrap(), job_name, options);
         } else {
             Err("Failed to create temp file")
         };
@@ -43,8 +44,9 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         file_path: &str,
         job_name: Option<&str>,
-    ) -> Result<(), &'static str> {
-        return cups::jobs::print_file(printer_system_name, file_path, job_name);
+        options: &[(&str, &str)],
+    ) -> Result<i32, &'static str> {
+        return cups::jobs::print_file(printer_system_name, file_path, job_name, options);
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
