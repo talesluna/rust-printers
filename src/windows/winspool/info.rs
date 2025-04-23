@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
 
 use libc::{c_int, c_uint, c_ulong, c_void, wchar_t};
 use std::{ptr, slice};
@@ -60,46 +61,46 @@ pub struct PRINTER_INFO_2W {
 
 impl PlatformPrinterGetters for PRINTER_INFO_2W {
     fn get_name(&self) -> String {
-        return wchar_t_to_string(self.pPrinterName);
+        wchar_t_to_string(self.pPrinterName)
     }
     fn get_is_default(&self) -> bool {
         let mut name_size: c_ulong = 0;
-        return unsafe {
+        unsafe {
             GetDefaultPrinterW(ptr::null_mut(), &mut name_size);
             let mut buffer: Vec<wchar_t> = vec![0; name_size as usize];
             GetDefaultPrinterW(buffer.as_mut_ptr(), &mut name_size);
             *self.pPrinterName == *buffer.as_ptr()
-        };
+        }
     }
     fn get_system_name(&self) -> String {
-        return wchar_t_to_string(self.pPrinterName);
+        wchar_t_to_string(self.pPrinterName)
     }
     fn get_marker_and_model(&self) -> String {
-        return wchar_t_to_string(self.pDriverName);
+        wchar_t_to_string(self.pDriverName)
     }
     fn get_is_shared(&self) -> bool {
-        return (self.Attributes & 0x00000008) == 8;
+        (self.Attributes & 0x00000008) == 8
     }
     fn get_uri(&self) -> String {
-        return "".to_string();
+        "".to_string()
     }
     fn get_location(&self) -> String {
-        return wchar_t_to_string(self.pLocation);
+        wchar_t_to_string(self.pLocation)
     }
     fn get_state(&self) -> String {
-        return self.Status.to_string();
+        self.Status.to_string()
     }
     fn get_port_name(&self) -> String {
-        return wchar_t_to_string(self.pPortName);
+        wchar_t_to_string(self.pPortName)
     }
     fn get_processor(&self) -> String {
-        return wchar_t_to_string(self.pPrintProcessor);
+        wchar_t_to_string(self.pPrintProcessor)
     }
     fn get_description(&self) -> String {
-        return wchar_t_to_string(self.pComment);
+        wchar_t_to_string(self.pComment)
     }
     fn get_data_type(&self) -> String {
-        return wchar_t_to_string(self.pDatatype);
+        wchar_t_to_string(self.pDatatype)
     }
 }
 
@@ -136,14 +137,14 @@ pub fn enum_printers(name: Option<&str>) -> &'static [PRINTER_INFO_2W] {
         buffer_ptr = alloc_s::<PRINTER_INFO_2W>(bytes_needed);
     }
 
-    return unsafe { slice::from_raw_parts(buffer_ptr, count_printers as usize) };
+    unsafe { slice::from_raw_parts(buffer_ptr, count_printers as usize) }
 }
 
 /**
- * Returns the defualt printer filetring all printer
+ * Returns the default printer filtering all printers
  */
 pub fn get_default_printer() -> Option<&'static PRINTER_INFO_2W> {
-    return enum_printers(None).iter().find(|p| p.get_is_default());
+    enum_printers(None).iter().find(|p| p.get_is_default())
 }
 
 /**

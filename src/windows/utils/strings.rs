@@ -13,9 +13,9 @@ pub fn wchar_t_to_string(value: *const wchar_t) -> String {
             i += 1;
         }
     }
-    return String::from_utf16_lossy(&vec);
+    String::from_utf16_lossy(&vec)
 }
 
 pub fn str_to_wide_string(value: &str) -> Vec<u16> {
-    return value.encode_utf16().chain(Some(0)).collect();
+    value.encode_utf16().chain(Some(0)).collect()
 }

@@ -66,15 +66,15 @@ impl PlatformPrinterJobGetters for CupsJobsS {
     }
 
     fn get_created_at(&self) -> SystemTime {
-        return time_t_to_system_time(self.creation_time).unwrap();
+        time_t_to_system_time(self.creation_time).unwrap()
     }
 
     fn get_processed_at(&self) -> Option<SystemTime> {
-        return time_t_to_system_time(self.processing_time);
+        time_t_to_system_time(self.processing_time)
     }
 
     fn get_completed_at(&self) -> Option<SystemTime> {
-        return time_t_to_system_time(self.completed_time);
+        time_t_to_system_time(self.completed_time)
     }
 }
 
@@ -86,14 +86,14 @@ pub fn get_printer_jobs(printer_name: &str, active_only: bool) -> Option<&'stati
     let whichjobs = if active_only { 0 } else { -1 };
     let name = str_to_cstring(printer_name);
 
-    return unsafe {
+    unsafe {
         let jobs_count = cupsGetJobs(&mut jobs_ptr, name.as_ptr(), 0, whichjobs);
         if jobs_count > 0 {
             Some(slice::from_raw_parts(jobs_ptr, jobs_count as usize))
         } else {
             None
         }
-    };
+    }
 }
 
 /**
@@ -110,10 +110,10 @@ pub fn print_file(
         let title = str_to_cstring(job_name.unwrap_or(file_path));
 
         let result = cupsPrintFile(printer.as_ptr(), filename.as_ptr(), title.as_ptr(), 0);
-        return if result == 0 {
+        if result == 0 {
             Err("cupsPrintFile failed")
         } else {
             Ok(())
-        };
+        }
     }
 }

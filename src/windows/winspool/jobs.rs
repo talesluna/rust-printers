@@ -101,27 +101,27 @@ pub struct JOB_INFO_1W {
 
 impl PlatformPrinterJobGetters for JOB_INFO_1W {
     fn get_id(&self) -> u64 {
-        return self.JobId.into();
+        self.JobId.into()
     }
 
     fn get_name(&self) -> String {
-        return wchar_t_to_string(self.pDocument);
+        wchar_t_to_string(self.pDocument)
     }
 
     fn get_state(&self) -> u64 {
-        return self.Status.into();
+        self.Status.into()
     }
 
     fn get_printer(&self) -> String {
-        return wchar_t_to_string(self.pPrinterName);
+        wchar_t_to_string(self.pPrinterName)
     }
 
     fn get_media_type(&self) -> String {
-        return wchar_t_to_string(self.pDatatype);
+        wchar_t_to_string(self.pDatatype)
     }
 
     fn get_created_at(&self) -> std::time::SystemTime {
-        return calculate_system_time(
+        calculate_system_time(
             self.Submitted.wYear,
             self.Submitted.wMonth,
             self.Submitted.wDay,
@@ -129,15 +129,15 @@ impl PlatformPrinterJobGetters for JOB_INFO_1W {
             self.Submitted.wMinute,
             self.Submitted.wSecond,
             self.Submitted.wMilliseconds,
-        );
+        )
     }
 
     fn get_processed_at(&self) -> Option<std::time::SystemTime> {
-        return Some(self.get_created_at());
+        Some(self.get_created_at())
     }
 
     fn get_completed_at(&self) -> Option<std::time::SystemTime> {
-        return Some(self.get_created_at());
+        Some(self.get_created_at())
     }
 }
 
@@ -200,7 +200,7 @@ pub fn print_buffer(
         }
     }
 
-    return Ok(());
+    Ok(())
 }
 
 /**
@@ -255,9 +255,9 @@ pub fn enum_printer_jobs(
         return Err("EnumJobsW failed");
     }
 
-    return Ok(if jobs_count > 0 {
+    Ok(if jobs_count > 0 {
         unsafe { slice::from_raw_parts(buffer_ptr as *const JOB_INFO_1W, jobs_count as usize) }
     } else {
         &[]
-    });
+    })
 }

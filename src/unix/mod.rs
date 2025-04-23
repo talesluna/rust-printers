@@ -22,7 +22,7 @@ impl PlatformActions for crate::Platform {
             .collect();
 
         cups::dests::free(dests);
-        return printers;
+        printers
     }
 
     fn print(
@@ -31,12 +31,12 @@ impl PlatformActions for crate::Platform {
         job_name: Option<&str>,
     ) -> Result<(), &'static str> {
         let path = crate::unix::utils::file::save_tmp_file(buffer);
-        return if path.is_some() {
+        if path.is_some() {
             let file_path = path.unwrap();
-            return Self::print_file(printer_system_name, file_path.to_str().unwrap(), job_name);
+            Self::print_file(printer_system_name, file_path.to_str().unwrap(), job_name)
         } else {
             Err("Failed to create temp file")
-        };
+        }
     }
 
     fn print_file(
@@ -44,15 +44,15 @@ impl PlatformActions for crate::Platform {
         file_path: &str,
         job_name: Option<&str>,
     ) -> Result<(), &'static str> {
-        return cups::jobs::print_file(printer_system_name, file_path, job_name);
+        cups::jobs::print_file(printer_system_name, file_path, job_name)
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
-        return cups::jobs::get_printer_jobs(printer_name, active_only)
+        cups::jobs::get_printer_jobs(printer_name, active_only)
             .unwrap_or_default()
             .into_iter()
             .map(|j| PrinterJob::from_platform_printer_job_getters(j))
-            .collect();
+            .collect()
     }
 
     fn get_default_printer() -> Option<Printer> {
@@ -63,7 +63,7 @@ impl PlatformActions for crate::Platform {
             .map(|d| Printer::from_platform_printer_getters(d));
 
         cups::dests::free(dests);
-        return dest;
+        dest
     }
 
     fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
@@ -74,7 +74,7 @@ impl PlatformActions for crate::Platform {
             .map(|d| Printer::from_platform_printer_getters(d));
 
         cups::dests::free(dests);
-        return dest;
+        dest
     }
 
     fn parse_printer_state(platform_state: &str) -> PrinterState {
@@ -90,7 +90,7 @@ impl PlatformActions for crate::Platform {
             return PrinterState::PAUSED;
         }
 
-        return PrinterState::UNKNOWN;
+        PrinterState::UNKNOWN
     }
 
     fn parse_printer_job_state(platform_state: u64) -> PrinterJobState {
@@ -114,6 +114,6 @@ impl PlatformActions for crate::Platform {
             return PrinterJobState::COMPLETED;
         }
 
-        return PrinterJobState::UNKNOWN;
+        PrinterJobState::UNKNOWN
     }
 }

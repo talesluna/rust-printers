@@ -2,11 +2,11 @@ use libc::c_ushort;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 fn is_leap_year(year: c_ushort) -> bool {
-    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 }
 
 fn days_in_months(year: c_ushort, month: c_ushort) -> c_ushort {
-    return if month == 2 {
+    if month == 2 {
         if is_leap_year(year) {
             29
         } else {
@@ -16,7 +16,7 @@ fn days_in_months(year: c_ushort, month: c_ushort) -> c_ushort {
         30
     } else {
         31
-    };
+    }
 }
 
 pub fn calculate_system_time(
@@ -43,12 +43,12 @@ pub fn calculate_system_time(
         + (minute as u64 * 60)
         + (second as u64);
 
-    return UNIX_EPOCH + Duration::new(total_seconds.into(), milliseconds as u32 * 1_000_000);
+    UNIX_EPOCH + Duration::new(total_seconds.into(), milliseconds as u32 * 1_000_000)
 }
 
 pub fn get_current_epoch() -> u128 {
-    return SystemTime::now()
+    SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
-        .as_millis();
+        .as_millis()
 }

@@ -54,7 +54,7 @@ impl PrinterJob {
     pub(crate) fn from_platform_printer_job_getters(
         platform_printer_job: &dyn PlatformPrinterJobGetters,
     ) -> Self {
-        return PrinterJob {
+        PrinterJob {
             id: platform_printer_job.get_id(),
             name: platform_printer_job.get_name(),
             state: PrinterJobState::from_platform_state(platform_printer_job.get_state()),
@@ -63,7 +63,7 @@ impl PrinterJob {
             processed_at: platform_printer_job.get_processed_at(),
             completed_at: platform_printer_job.get_completed_at(),
             printer_name: platform_printer_job.get_printer(),
-        };
+        }
     }
 }
 
@@ -95,6 +95,6 @@ impl Debug for PrinterJob {
 
 impl PrinterJobState {
     pub(crate) fn from_platform_state(platform_state: u64) -> Self {
-        return crate::Platform::parse_printer_job_state(platform_state);
+        crate::Platform::parse_printer_job_state(platform_state)
     }
 }
