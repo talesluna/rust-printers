@@ -63,8 +63,7 @@ impl PlatformActions for crate::Platform {
     }
 
     fn get_default_printer() -> Option<Printer> {
-        winspool::info::get_default_printer()
-            .map(|p| Printer::from_platform_printer_getters(p))
+        winspool::info::get_default_printer().map(|p| Printer::from_platform_printer_getters(p))
     }
 
     fn get_printer_by_name(name: &str) -> Option<Printer> {
