@@ -10,7 +10,7 @@ use std::ffi::CString;
 use std::{slice, time::SystemTime};
 
 #[link(name = "cups")]
-extern "C" {
+unsafe extern "C" {
 
     fn cupsPrintFile(
         printer_name: *const c_char,

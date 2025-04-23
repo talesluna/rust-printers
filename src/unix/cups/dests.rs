@@ -5,7 +5,7 @@ use libc::{c_char, c_int};
 use std::{ffi::CString, ptr, slice};
 
 #[link(name = "cups")]
-extern "C" {
+unsafe extern "C" {
     fn cupsGetDests(dests: *mut *mut CupsDestT) -> c_int;
     fn cupsFreeDests(num_dests: c_int, dests: *const CupsDestT);
     fn cupsGetOption(
