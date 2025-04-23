@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
 
 use libc::{c_int, c_ulong, c_ushort, c_void, wchar_t};
 use std::{ptr, slice};
@@ -204,7 +205,7 @@ pub fn print_buffer(
 }
 
 /**
- * Retrive print jobs of specific printer with EnumJobsW
+ * Retrieve print jobs of a specific printer with EnumJobsW
  */
 pub fn enum_printer_jobs(
     printer_system_name: &str,

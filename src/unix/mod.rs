@@ -14,9 +14,9 @@ mod utils;
 
 impl PlatformActions for crate::Platform {
     fn get_printers() -> Vec<Printer> {
-        let dests = cups::dests::get_dests().unwrap_or_default();
+        let dests = get_dests().unwrap_or_default();
         let printers = dests
-            .into_iter()
+            .iter()
             .filter(|p| !p.is_shared_duplex())
             .map(|p| Printer::from_platform_printer_getters(p))
             .collect();
@@ -30,7 +30,7 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         job_name: Option<&str>,
     ) -> Result<(), &'static str> {
-        let path = crate::unix::utils::file::save_tmp_file(buffer);
+        let path = utils::file::save_tmp_file(buffer);
         if path.is_some() {
             let file_path = path.unwrap();
             Self::print_file(printer_system_name, file_path.to_str().unwrap(), job_name)
@@ -50,7 +50,7 @@ impl PlatformActions for crate::Platform {
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
         cups::jobs::get_printer_jobs(printer_name, active_only)
             .unwrap_or_default()
-            .into_iter()
+            .iter()
             .map(|j| PrinterJob::from_platform_printer_job_getters(j))
             .collect()
     }
@@ -58,7 +58,7 @@ impl PlatformActions for crate::Platform {
     fn get_default_printer() -> Option<Printer> {
         let dests = get_dests().unwrap_or_default();
         let dest = dests
-            .into_iter()
+            .iter()
             .find(|d| d.get_is_default())
             .map(|d| Printer::from_platform_printer_getters(d));
 
@@ -69,7 +69,7 @@ impl PlatformActions for crate::Platform {
     fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
         let dests = get_dests().unwrap_or_default();
         let dest = dests
-            .into_iter()
+            .iter()
             .find(|d| d.get_name() == printer_name || d.get_system_name() == printer_name)
             .map(|d| Printer::from_platform_printer_getters(d));
 

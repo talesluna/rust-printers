@@ -134,7 +134,7 @@ pub fn get_dests() -> Option<&'static [CupsDestT]> {
  * Free dests memory
  */
 pub fn free(dests: &'static [CupsDestT]) {
-    if dests.len() > 0 {
+    if !dests.is_empty() {
         unsafe {
             cupsFreeDests(dests.len() as i32, dests.as_ptr() as *mut CupsDestT);
         }

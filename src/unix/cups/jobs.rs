@@ -46,23 +46,23 @@ pub struct CupsJobsS {
 
 impl PlatformPrinterJobGetters for CupsJobsS {
     fn get_id(&self) -> u64 {
-        return self.id as u64;
+        self.id as u64
     }
 
     fn get_name(&self) -> String {
-        return c_char_to_string(self.title);
+        c_char_to_string(self.title)
     }
 
     fn get_state(&self) -> u64 {
-        return self.state as u64;
+        self.state as u64
     }
 
     fn get_printer(&self) -> String {
-        return c_char_to_string(self.dest);
+        c_char_to_string(self.dest)
     }
 
     fn get_media_type(&self) -> String {
-        return c_char_to_string(self.format);
+        c_char_to_string(self.format)
     }
 
     fn get_created_at(&self) -> SystemTime {
@@ -97,7 +97,7 @@ pub fn get_printer_jobs(printer_name: &str, active_only: bool) -> Option<&'stati
 }
 
 /**
- * Send an file to printer
+ * Send a file to the printer
  */
 pub fn print_file(
     printer_name: &str,

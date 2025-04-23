@@ -21,11 +21,11 @@ pub struct PrinterJob {
      */
     pub id: u64,
     /**
-     * Visual name/title of job
+     * Visual name/title of a job
      */
     pub name: String,
     /**
-     * Job Status, indicates how the job is currently
+     * Job Status indicates how the job is currently
      */
     pub state: PrinterJobState,
     /**
@@ -33,15 +33,15 @@ pub struct PrinterJob {
      */
     pub media_type: String,
     /**
-     * Date when job was created
+     * Date when a job was created
      */
     pub created_at: SystemTime,
     /**
-     * Date when job was processed or started printing
+     * Date when a job was processed or started printing
      */
     pub processed_at: Option<SystemTime>,
     /**
-     * Date when job was completed
+     * Date when a job was completed
      */
     pub completed_at: Option<SystemTime>,
     /**

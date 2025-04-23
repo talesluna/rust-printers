@@ -7,31 +7,24 @@
 //! ```rust
 //! use printers::{get_printer_by_name, get_default_printer, get_printers};
 //!
-//! fn main() {
+//! // Iterate all available printers
+//! for printer in get_printers() {
+//!     println!("{:?}", printer);
+//! }
 //!
-//!    // Iterate all available printers
-//!    for printer in get_printers() {
-//!        println!("{:?}", printer);
-//!    }
+//! // Get a printer by the name
+//! let my_printer = get_printer_by_name("my_printer");
+//! if my_printer.is_some() {
+//!     let job_id = my_printer.unwrap().print_file("notes.txt", None);
+//!     // Err("cupsPrintFile failed")
+//! }
 //!
-//!    // Get a printer by the name
-//!    let my_printer = get_printer_by_name("my_printer");
-//!    if my_printer.is_some() {
-//!        my_printer.unwrap().print_file("notes.txt", None);
-//!        // Err("cupsPrintFile failed")
-//!    }
-//!
-//!    // Use the default printer
-//!    let default_printer = get_default_printer();
-//!    if default_printer.is_some() {
-//!        default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"));
-//!        // Ok(())
-//!    }
-//!
+//! // Use the default printer
+//! let default_printer = get_default_printer();
+//! if default_printer.is_some() {
+//!     let job_id = default_printer.unwrap().print("my content".as_bytes(), Some("My Job"));
 //! }
 //! ```
-//!
-//!
 
 struct Platform;
 
@@ -46,22 +39,22 @@ mod windows;
 use common::{base::printer::Printer, traits::platform::PlatformActions};
 
 /**
- * Return all available printers on system
+ * Return all available printers on a system
  */
 pub fn get_printers() -> Vec<Printer> {
-    return Platform::get_printers();
+    Platform::get_printers()
 }
 
 /**
- * If you known the printer nme you can try get the printer directly
+ * If you know the printer name, you can try to get the printer directly
  */
 pub fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
-    return Platform::get_printer_by_name(printer_name);
+    Platform::get_printer_by_name(printer_name)
 }
 
 /**
  * Return the default system printer
  */
 pub fn get_default_printer() -> Option<Printer> {
-    return Platform::get_default_printer();
+    Platform::get_default_printer()
 }

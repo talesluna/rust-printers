@@ -21,7 +21,7 @@ pub struct Printer {
     pub name: String,
 
     /**
-     * Name of Printer exactly as on system
+     * Name of Printer exactly as on a system
      */
     pub system_name: String,
 
@@ -31,17 +31,17 @@ pub struct Printer {
     pub driver_name: String,
 
     /**
-     * Uri of printer (default is empty string)
+     * Uri of printer (default is an empty string)
      */
     pub uri: String,
 
     /**
-     * Name of printer port (default is empty string)
+     * Name of printer port (default is an empty string)
      */
     pub port_name: String,
 
     /**
-     * Name of printer port (default is empty string)
+     * Name of printer port (default is an empty string)
      */
     pub processor: String,
 
@@ -51,12 +51,12 @@ pub struct Printer {
     pub data_type: String,
 
     /**
-     * Name of printer port (default is empty string)
+     * Name of printer port (default is an empty string)
      */
     pub description: String,
 
     /**
-     * Location definition of printer (default is empty string)
+     * Location definition of printer (default is an empty string)
      */
     pub location: String,
 
@@ -118,10 +118,10 @@ impl Clone for Printer {
             uri: self.uri.clone(),
             location: self.location.clone(),
             port_name: self.port_name.clone(),
-            is_default: self.is_default.clone(),
+            is_default: self.is_default,
             system_name: self.system_name.clone(),
             driver_name: self.driver_name.clone(),
-            is_shared: self.is_shared.clone(),
+            is_shared: self.is_shared,
             data_type: self.data_type.clone(),
             description: self.description.clone(),
             processor: self.processor.clone(),
@@ -152,28 +152,28 @@ impl Printer {
     }
 
     /**
-     * Print bytes with self printer instance
+     * Print bytes
      */
     pub fn print(&self, buffer: &[u8], job_name: Option<&str>) -> Result<(), &'static str> {
         crate::Platform::print(self.system_name.as_str(), buffer, job_name)
     }
 
     /**
-     * Print specific file with self printer instance
+     * Print file
      */
     pub fn print_file(&self, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str> {
         crate::Platform::print_file(self.system_name.as_str(), file_path, job_name)
     }
 
     /**
-     * Return vec of active jobs of printer
+     * Return active jobs
      */
     pub fn get_active_jobs(&self) -> Vec<PrinterJob> {
         crate::Platform::get_printer_jobs(self.system_name.as_str(), true)
     }
 
     /**
-     * Return vec of a historic jobs of printer
+     * Return historic jobs
      */
     pub fn get_job_history(&self) -> Vec<PrinterJob> {
         crate::Platform::get_printer_jobs(self.system_name.as_str(), false)
