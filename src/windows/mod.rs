@@ -26,7 +26,7 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         buffer: &[u8],
         job_name: Option<&str>,
-        options: &[(&str, &str)],
+        _options: &[(&str, &str)], // currently unused, no-op
     ) -> Result<u64, &'static str> {
         winspool::jobs::print_buffer(printer_system_name, job_name, buffer)
     }
