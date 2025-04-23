@@ -7,11 +7,7 @@ fn is_leap_year(year: c_ushort) -> bool {
 
 fn days_in_months(year: c_ushort, month: c_ushort) -> c_ushort {
     if month == 2 {
-        if is_leap_year(year) {
-            29
-        } else {
-            28
-        }
+        if is_leap_year(year) { 29 } else { 28 }
     } else if month == 4 || month == 6 || month == 9 || month == 11 {
         30
     } else {

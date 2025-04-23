@@ -1,5 +1,5 @@
 use libc::c_ulong;
-use std::alloc::{alloc, dealloc, Layout};
+use std::alloc::{Layout, alloc, dealloc};
 
 fn _ptr_layout<T>(size: usize) -> Layout {
     unsafe { Layout::from_size_align_unchecked(size, align_of::<T>()) }
