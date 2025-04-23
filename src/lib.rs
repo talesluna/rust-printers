@@ -16,7 +16,7 @@
 //! let my_printer = get_printer_by_name("my_printer");
 //! if my_printer.is_some() {
 //!     let job_id = my_printer.unwrap().print_file("notes.txt", None, &[]);
-//!     // Err("cupsPrintFile failed") or Ok(u64)
+//!     // Err("...") or Ok(u64)
 //! }
 //!
 //! // Use the default printer
@@ -28,6 +28,7 @@
 //!         ("copies", "2"),
 //!     ];
 //!     let job_id = default_printer.unwrap().print("my content".as_bytes(), Some("My Job"), &options);
+//!     // Err("...") or Ok(u64)
 //! }
 //! ```
 
