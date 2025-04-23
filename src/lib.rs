@@ -4,7 +4,7 @@
 //!
 //! Printers can provide a list of printers available on the system and send print jobs to them
 //!
-//! ```rust
+//! ```rust,ignore
 //! use printers::{get_printer_by_name, get_default_printer, get_printers};
 //!
 //! // Iterate all available printers
@@ -71,6 +71,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "for manual testing only - requires actual printer hardware"]
     fn test_zpl_with_cups_options() {
         //println!("{:?}", get_printers());
         let printer = get_printer_by_name("Zebra Technologies ZTC ZD410-203dpi ZPL").unwrap();
@@ -101,6 +102,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "for manual testing only - requires actual printer hardware"]
     fn test_zpl_with_win_options() {
         //println!("{:?}", get_printers());
         let printer = get_printer_by_name("Microsoft Print to PDF").unwrap();
