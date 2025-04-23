@@ -15,14 +15,14 @@
 //! // Get a printer by the name
 //! let my_printer = get_printer_by_name("my_printer");
 //! if my_printer.is_some() {
-//!     let job_id = my_printer.unwrap().print_file("notes.txt", None);
+//!     my_printer.unwrap().print_file("notes.txt", None).unwrap();
 //!     // Err("cupsPrintFile failed")
 //! }
 //!
 //! // Use the default printer
 //! let default_printer = get_default_printer();
 //! if default_printer.is_some() {
-//!     let job_id = default_printer.unwrap().print("my content".as_bytes(), Some("My Job"));
+//!     default_printer.unwrap().print("my content".as_bytes(), Some("My Job")).unwrap();
 //! }
 //! ```
 
