@@ -5,7 +5,10 @@ use std::{ptr, slice};
 
 use crate::{
     common::traits::platform::PlatformPrinterGetters,
-    windows::utils::{memory::{alloc_s, dealloc_s}, strings::{str_to_wide_string, wchar_t_to_string}}
+    windows::utils::{
+        memory::{alloc_s, dealloc_s},
+        strings::{str_to_wide_string, wchar_t_to_string},
+    },
 };
 
 #[link(name = "winspool")]
@@ -131,7 +134,6 @@ pub fn enum_printers(name: Option<&str>) -> &'static [PRINTER_INFO_2W] {
         }
 
         buffer_ptr = alloc_s::<PRINTER_INFO_2W>(bytes_needed);
-
     }
 
     return unsafe { slice::from_raw_parts(buffer_ptr, count_printers as usize) };

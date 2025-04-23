@@ -162,7 +162,8 @@ pub fn print_buffer(
             return Err("OpenPrinterW failed");
         }
 
-        let mut pDocName = str_to_wide_string(job_name.unwrap_or(get_current_epoch().to_string().as_str()));
+        let mut pDocName =
+            str_to_wide_string(job_name.unwrap_or(get_current_epoch().to_string().as_str()));
         let mut pDatatype = str_to_wide_string("RAW");
 
         let doc_info = DocInfo1 {

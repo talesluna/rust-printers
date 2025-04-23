@@ -1,4 +1,3 @@
-
 use std::fmt::{Debug, Error, Formatter};
 
 use super::job::PrinterJob;
@@ -131,7 +130,9 @@ impl Clone for Printer {
 }
 
 impl Printer {
-    pub(crate) fn from_platform_printer_getters(platform_printer: &dyn PlatformPrinterGetters) -> Printer {
+    pub(crate) fn from_platform_printer_getters(
+        platform_printer: &dyn PlatformPrinterGetters,
+    ) -> Printer {
         let printer = Printer {
             name: platform_printer.get_name(),
             system_name: platform_printer.get_system_name(),
@@ -163,7 +164,7 @@ impl Printer {
     pub fn print_file(&self, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str> {
         return crate::Platform::print_file(self.system_name.as_str(), file_path, job_name);
     }
-    
+
     /**
      * Return vec of active jobs of printer
      */
@@ -177,13 +178,10 @@ impl Printer {
     pub fn get_job_history(&self) -> Vec<PrinterJob> {
         return crate::Platform::get_printer_jobs(self.system_name.as_str(), false);
     }
-
 }
-
 
 impl PrinterState {
     pub(crate) fn from_platform_state(platform_state: &str) -> Self {
         return crate::Platform::parse_printer_state(platform_state);
     }
 }
-

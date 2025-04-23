@@ -37,7 +37,8 @@ impl PlatformActions for crate::Platform {
     ) -> Result<(), &'static str> {
         let buffer = utils::file::get_file_as_bytes(file_path);
         return if buffer.is_some() {
-            let job_name = job_name.unwrap_or(Path::new(file_path).file_name().unwrap().to_str().unwrap());
+            let job_name =
+                job_name.unwrap_or(Path::new(file_path).file_name().unwrap().to_str().unwrap());
             return Self::print(printer_system_name, &buffer.unwrap(), Some(job_name));
         } else {
             Err("failed to read file")
@@ -56,7 +57,7 @@ impl PlatformActions for crate::Platform {
                         || j.state == PrinterJobState::PAUSED
                 } else {
                     true
-                }
+                };
             })
             .collect();
     }

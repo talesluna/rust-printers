@@ -1,9 +1,12 @@
-use std::{slice, time::SystemTime};
-use libc::{c_char, c_int, time_t};
 use crate::{
     common::traits::platform::PlatformPrinterJobGetters,
-    unix::utils::{date::time_t_to_system_time, strings::{c_char_to_string, str_to_cstring}},
+    unix::utils::{
+        date::time_t_to_system_time,
+        strings::{c_char_to_string, str_to_cstring},
+    },
 };
+use libc::{c_char, c_int, time_t};
+use std::{slice, time::SystemTime};
 
 #[link(name = "cups")]
 extern "C" {
@@ -43,7 +46,7 @@ pub struct CupsJobsS {
 
 impl PlatformPrinterJobGetters for CupsJobsS {
     fn get_id(&self) -> u64 {
-       return self.id as u64;
+        return self.id as u64;
     }
 
     fn get_name(&self) -> String {
@@ -96,17 +99,21 @@ pub fn get_printer_jobs(printer_name: &str, active_only: bool) -> Option<&'stati
 /**
  * Send an file to printer
  */
-pub fn print_file(printer_name: &str, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str> {
-    unsafe {        
+pub fn print_file(
+    printer_name: &str,
+    file_path: &str,
+    job_name: Option<&str>,
+) -> Result<(), &'static str> {
+    unsafe {
         let printer = &str_to_cstring(printer_name);
         let filename = str_to_cstring(file_path);
         let title = str_to_cstring(job_name.unwrap_or(file_path));
- 
+
         let result = cupsPrintFile(printer.as_ptr(), filename.as_ptr(), title.as_ptr(), 0);
         return if result == 0 {
             Err("cupsPrintFile failed")
         } else {
             Ok(())
-        }
+        };
     }
 }

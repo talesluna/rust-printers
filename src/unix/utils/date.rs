@@ -1,5 +1,5 @@
-use std::time::{SystemTime, Duration, UNIX_EPOCH};
 use libc::time_t;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 pub fn time_t_to_system_time(value: time_t) -> Option<SystemTime> {
     return if value > 0 {
@@ -7,5 +7,5 @@ pub fn time_t_to_system_time(value: time_t) -> Option<SystemTime> {
         Some(time)
     } else {
         None
-    }
+    };
 }

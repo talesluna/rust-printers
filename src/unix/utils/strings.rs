@@ -1,5 +1,5 @@
-use std::ffi::{CStr, CString};
 use libc::c_char;
+use std::ffi::{CStr, CString};
 
 pub fn c_char_to_string(value: *const c_char) -> String {
     return if !value.is_null() {
