@@ -14,15 +14,15 @@ mod utils;
 
 impl PlatformActions for crate::Platform {
     fn get_printers() -> Vec<Printer> {
-        let dests = cups::dests::get_dests().unwrap_or_default();
+        let dests = get_dests().unwrap_or_default();
         let printers = dests
-            .into_iter()
+            .iter()
             .filter(|p| !p.is_shared_duplex())
             .map(|p| Printer::from_platform_printer_getters(p))
             .collect();
 
         cups::dests::free(dests);
-        return printers;
+        printers
     }
 
     fn print(
@@ -31,13 +31,18 @@ impl PlatformActions for crate::Platform {
         job_name: Option<&str>,
         options: &[(&str, &str)],
     ) -> Result<u64, &'static str> {
-        let path = crate::unix::utils::file::save_tmp_file(buffer);
-        return if path.is_some() {
+        let path = utils::file::save_tmp_file(buffer);
+        if path.is_some() {
             let file_path = path.unwrap();
-            return Self::print_file(printer_system_name, file_path.to_str().unwrap(), job_name, options);
+            Self::print_file(
+                printer_system_name,
+                file_path.to_str().unwrap(),
+                job_name,
+                options,
+            )
         } else {
             Err("Failed to create temp file")
-        };
+        }
     }
 
     fn print_file(
@@ -46,37 +51,37 @@ impl PlatformActions for crate::Platform {
         job_name: Option<&str>,
         options: &[(&str, &str)],
     ) -> Result<u64, &'static str> {
-        return cups::jobs::print_file(printer_system_name, file_path, job_name, options);
+        cups::jobs::print_file(printer_system_name, file_path, job_name, options)
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
-        return cups::jobs::get_printer_jobs(printer_name, active_only)
+        cups::jobs::get_printer_jobs(printer_name, active_only)
             .unwrap_or_default()
-            .into_iter()
+            .iter()
             .map(|j| PrinterJob::from_platform_printer_job_getters(j))
-            .collect();
+            .collect()
     }
 
     fn get_default_printer() -> Option<Printer> {
         let dests = get_dests().unwrap_or_default();
         let dest = dests
-            .into_iter()
+            .iter()
             .find(|d| d.get_is_default())
             .map(|d| Printer::from_platform_printer_getters(d));
 
         cups::dests::free(dests);
-        return dest;
+        dest
     }
 
     fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
         let dests = get_dests().unwrap_or_default();
         let dest = dests
-            .into_iter()
+            .iter()
             .find(|d| d.get_name() == printer_name || d.get_system_name() == printer_name)
             .map(|d| Printer::from_platform_printer_getters(d));
 
         cups::dests::free(dests);
-        return dest;
+        dest
     }
 
     fn parse_printer_state(platform_state: &str) -> PrinterState {
@@ -92,7 +97,7 @@ impl PlatformActions for crate::Platform {
             return PrinterState::PAUSED;
         }
 
-        return PrinterState::UNKNOWN;
+        PrinterState::UNKNOWN
     }
 
     fn parse_printer_job_state(platform_state: u64) -> PrinterJobState {
@@ -116,6 +121,6 @@ impl PlatformActions for crate::Platform {
             return PrinterJobState::COMPLETED;
         }
 
-        return PrinterJobState::UNKNOWN;
+        PrinterJobState::UNKNOWN
     }
 }
