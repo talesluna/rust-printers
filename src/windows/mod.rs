@@ -64,7 +64,7 @@ impl PlatformActions for crate::Platform {
                         || j.state == PrinterJobState::PAUSED
                 } else {
                     true
-                };
+                }
             })
             .collect()
     }
