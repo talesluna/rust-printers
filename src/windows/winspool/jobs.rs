@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[link(name = "winspool")]
-extern "system" {
+unsafe extern "system" {
     fn OpenPrinterW(
         pPrinterName: *const wchar_t,
         phPrinter: *mut *mut c_void,

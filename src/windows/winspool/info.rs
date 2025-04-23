@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[link(name = "winspool")]
-extern "system" {
+unsafe extern "system" {
 
     fn EnumPrintersW(
         Flags: c_ulong,
