@@ -5,10 +5,10 @@ use libc::{c_char, c_int};
 use std::{ffi::CString, ptr, slice};
 
 #[link(name = "cups")]
-extern "C" {
-    fn cupsGetDests(dests: *mut *mut CupsDestT) -> c_int;
-    fn cupsFreeDests(num_dests: c_int, dests: *const CupsDestT);
-    fn cupsGetOption(
+unsafe extern "C" {
+    unsafe fn cupsGetDests(dests: *mut *mut CupsDestT) -> c_int;
+    unsafe fn cupsFreeDests(num_dests: c_int, dests: *const CupsDestT);
+    unsafe fn cupsGetOption(
         name: *const c_char,
         num_options: c_int,
         options: *mut CupsOptionT,
@@ -48,8 +48,7 @@ impl CupsDestT {
         if !self.options.is_null() && key.is_ok() {
             let option_key = key.unwrap();
             unsafe {
-                let option_value =
-                    cupsGetOption(option_key.as_ptr(), self.num_options, self.options);
+                let option_value = cupsGetOption(option_key.as_ptr(), self.num_options, self.options);
                 if !option_value.is_null() {
                     value = c_char_to_string(option_value);
                 }
@@ -59,8 +58,8 @@ impl CupsDestT {
         return value;
     }
 
-    pub fn is_shared_duplex(&self) -> bool {
-        return self.num_options == 5;
+    pub fn is_valid(&self) -> bool {
+        return self.num_options != 5 || self.get_state() != 0;
     }
 }
 
@@ -93,8 +92,16 @@ impl PlatformPrinterGetters for CupsDestT {
         return self.get_option("printer-location");
     }
 
-    fn get_state(&self) -> String {
-        return self.get_option("printer-state");
+    fn get_state(&self) -> u64 {
+        return self.get_option("printer-state").parse::<u64>().unwrap_or_default();
+    }
+
+    fn get_state_reasons(&self) -> Vec<String> {
+        return self
+            .get_option("printer-state-reasons")
+            .split(",")
+            .filter_map(|v| if v.is_empty() { None } else { Some(v.to_string()) })
+            .collect();
     }
 
     fn get_port_name(&self) -> String {

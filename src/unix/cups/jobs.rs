@@ -6,19 +6,18 @@ use crate::{
 };
 
 #[link(name = "cups")]
-extern "C" {
+unsafe extern "C" {
 
-    fn cupsPrintFile(
+    unsafe fn cupsPrintFile(
         printer_name: *const c_char,
         filename: *const c_char,
         title: *const c_char,
         options: i32,
     ) -> i32;
 
-    fn cupsGetJobs(
+    unsafe fn cupsGetJobs(
         jobs: *mut *mut CupsJobsS,
         name: *const c_char,
-        // how: c_int,
         myjobs: c_int,
         whichjobs: c_int,
     ) -> c_int;

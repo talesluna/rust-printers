@@ -7,6 +7,7 @@ use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
 #[derive(Debug, Clone)]
 pub enum PrinterState {
     READY,
+    OFFLINE,
     PAUSED,
     PRINTING,
     UNKNOWN,
@@ -75,6 +76,11 @@ pub struct Printer {
      * The state of the printer
      */
     pub state: PrinterState,
+
+    /**
+     * The state reasons of the printer
+     */
+    pub state_reasons: Vec<String>,
 }
 
 impl Debug for Printer {
@@ -84,6 +90,7 @@ impl Debug for Printer {
             "Printer {{
                 \r  name: {:?},
                 \r  state: {:?},
+                \r  state_reasons: {:?},
                 \r  system_name: {:?},
                 \r  is_default: {:?},
                 \r  uri: {:?},
@@ -97,6 +104,7 @@ impl Debug for Printer {
             \r}}",
             self.name,
             self.state,
+            self.state_reasons,
             self.system_name,
             self.is_default,
             self.uri,
@@ -116,6 +124,7 @@ impl Clone for Printer {
         return Printer {
             name: self.name.clone(),
             state: self.state.clone(),
+            state_reasons: self.state_reasons.clone(),
             uri: self.uri.clone(),
             location: self.location.clone(),
             port_name: self.port_name.clone(),
@@ -132,7 +141,14 @@ impl Clone for Printer {
 
 impl Printer {
     pub(crate) fn from_platform_printer_getters(platform_printer: &dyn PlatformPrinterGetters) -> Printer {
-        let printer = Printer {
+
+        let mut state_reasons = platform_printer.get_state_reasons();
+
+        if state_reasons.is_empty() {
+            state_reasons.push("none".to_string());
+        }
+
+        return Printer {
             name: platform_printer.get_name(),
             system_name: platform_printer.get_system_name(),
             driver_name: platform_printer.get_marker_and_model(),
@@ -144,10 +160,9 @@ impl Printer {
             data_type: platform_printer.get_data_type(),
             processor: platform_printer.get_processor(),
             description: platform_printer.get_description(),
-            state: PrinterState::from_platform_state(platform_printer.get_state().as_str()),
+            state: PrinterState::from_platform_state(platform_printer.get_state(), state_reasons.join(",").as_str()),
+            state_reasons
         };
-
-        return printer;
     }
 
     /**
@@ -182,8 +197,7 @@ impl Printer {
 
 
 impl PrinterState {
-    pub(crate) fn from_platform_state(platform_state: &str) -> Self {
-        return crate::Platform::parse_printer_state(platform_state);
+    pub(crate) fn from_platform_state(platform_state: u64, state_reasons: &str) -> Self {
+        return crate::Platform::parse_printer_state(platform_state, state_reasons);
     }
 }
-

@@ -73,47 +73,29 @@ impl PlatformActions for crate::Platform {
             .map(|p| Printer::from_platform_printer_getters(p));
     }
 
-    fn parse_printer_state(platform_state: &str) -> PrinterState {
-        if platform_state == "0" {
-            return PrinterState::READY;
+    fn parse_printer_state(platform_state: u64, state_reasons: &str) -> PrinterState {
+
+        if state_reasons.contains("offline") || state_reasons.contains("pending_deletion") {
+            return PrinterState::OFFLINE;
         }
 
-        if platform_state == "1" || platform_state == "2" {
-            return PrinterState::PAUSED;
+        match platform_state {
+            s if s == 0 || s & (0x00000100 | 0x00004000) != 0 => PrinterState::READY,
+            s if s & 0x00000400 != 0 => PrinterState::PRINTING,
+            s if s & (0x00000001 | 0x00000002 | 0x00000008 | 0x00000010 | 0x00000020) != 0 => PrinterState::PAUSED,
+            s if s & (0x00000080 | 0x00400000 | 0x00001000 | 0x00000004) != 0 => PrinterState::OFFLINE,
+            _ => PrinterState::UNKNOWN,
         }
-
-        if platform_state == "5" {
-            return PrinterState::PRINTING;
-        }
-
-        return PrinterState::UNKNOWN;
     }
 
     fn parse_printer_job_state(platform_state: u64) -> PrinterJobState {
-        if platform_state == 32
-            || platform_state == 64
-            || platform_state == 512
-            || platform_state == 1024
-        {
-            return PrinterJobState::PENDING;
+        match platform_state {
+            1 | 8 => PrinterJobState::PAUSED,
+            4 | 256 => PrinterJobState::CANCELLED,
+            16 | 2048 | 8192 => PrinterJobState::PROCESSING,
+            32 | 64 | 512 | 1024 => PrinterJobState::PENDING,
+            128 | 496 => PrinterJobState::COMPLETED,
+            _ => PrinterJobState::UNKNOWN
         }
-
-        if platform_state == 1 || platform_state == 8 {
-            return PrinterJobState::PAUSED;
-        }
-
-        if platform_state == 16 || platform_state == 2048 || platform_state == 8192 {
-            return PrinterJobState::PROCESSING;
-        }
-
-        if platform_state == 4 || platform_state == 256 {
-            return PrinterJobState::CANCELLED;
-        }
-
-        if platform_state == 128 || platform_state == 4096 {
-            return PrinterJobState::COMPLETED;
-        }
-
-        return PrinterJobState::UNKNOWN;
     }
 }
