@@ -58,10 +58,6 @@ impl CupsDestT {
 
         value
     }
-
-    pub fn is_valid(&self) -> bool {
-        self.num_options != 5 || self.get_state() != 0
-    }
 }
 
 impl PlatformPrinterGetters for CupsDestT {

@@ -17,7 +17,6 @@ impl PlatformActions for crate::Platform {
         let dests = get_dests().unwrap_or_default();
         let printers = dests
             .iter()
-            .filter(|p| p.is_valid())
             .map(|p| Printer::from_platform_printer_getters(p))
             .collect();
 
