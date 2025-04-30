@@ -23,7 +23,6 @@ unsafe extern "C" {
     fn cupsGetJobs(
         jobs: *mut *mut CupsJobsS,
         name: *const c_char,
-        // how: c_int,
         myjobs: c_int,
         whichjobs: c_int,
     ) -> c_int;

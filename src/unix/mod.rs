@@ -17,7 +17,7 @@ impl PlatformActions for crate::Platform {
         let dests = get_dests().unwrap_or_default();
         let printers = dests
             .iter()
-            .filter(|p| !p.is_shared_duplex())
+            .filter(|p| p.is_valid())
             .map(|p| Printer::from_platform_printer_getters(p))
             .collect();
 
@@ -84,43 +84,27 @@ impl PlatformActions for crate::Platform {
         dest
     }
 
-    fn parse_printer_state(platform_state: &str) -> PrinterState {
-        if platform_state == "3" {
-            return PrinterState::READY;
+    fn parse_printer_state(platform_state: u64, state_reasons: &str) -> PrinterState {
+        if state_reasons.contains("offline-report") {
+            return PrinterState::OFFLINE;
         }
 
-        if platform_state == "4" {
-            return PrinterState::PRINTING;
+        match platform_state {
+            3 => PrinterState::READY,
+            4 => PrinterState::PRINTING,
+            5 => PrinterState::PAUSED,
+            _ => PrinterState::UNKNOWN,
         }
-
-        if platform_state == "5" {
-            return PrinterState::PAUSED;
-        }
-
-        PrinterState::UNKNOWN
     }
 
     fn parse_printer_job_state(platform_state: u64) -> PrinterJobState {
-        if platform_state == 3 {
-            return PrinterJobState::PENDING;
+        match platform_state {
+            3 => PrinterJobState::PENDING,
+            4 | 6 => PrinterJobState::PAUSED,
+            5 => PrinterJobState::PROCESSING,
+            7 | 8 => PrinterJobState::CANCELLED,
+            9 => PrinterJobState::COMPLETED,
+            _ => PrinterJobState::UNKNOWN,
         }
-
-        if platform_state == 4 || platform_state == 6 {
-            return PrinterJobState::PAUSED;
-        }
-
-        if platform_state == 5 {
-            return PrinterJobState::PROCESSING;
-        }
-
-        if platform_state == 7 || platform_state == 8 {
-            return PrinterJobState::CANCELLED;
-        }
-
-        if platform_state == 9 {
-            return PrinterJobState::COMPLETED;
-        }
-
-        PrinterJobState::UNKNOWN
     }
 }

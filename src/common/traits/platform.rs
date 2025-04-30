@@ -12,7 +12,8 @@ pub trait PlatformPrinterGetters {
     fn get_is_shared(&self) -> bool;
     fn get_uri(&self) -> String;
     fn get_location(&self) -> String;
-    fn get_state(&self) -> String;
+    fn get_state(&self) -> u64;
+    fn get_state_reasons(&self) -> Vec<String>;
     fn get_port_name(&self) -> String;
     fn get_processor(&self) -> String;
     fn get_description(&self) -> String;
@@ -50,6 +51,6 @@ pub trait PlatformActions {
     ) -> Vec<crate::common::base::job::PrinterJob>;
     fn get_default_printer() -> Option<Printer>;
     fn get_printer_by_name(printer_name: &str) -> Option<Printer>;
-    fn parse_printer_state(platform_state: &str) -> PrinterState;
+    fn parse_printer_state(platform_state: u64, state_reasons: &str) -> PrinterState;
     fn parse_printer_job_state(platform_state: u64) -> PrinterJobState;
 }
