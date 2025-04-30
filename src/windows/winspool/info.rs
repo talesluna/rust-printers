@@ -88,7 +88,7 @@ impl PlatformPrinterGetters for PRINTER_INFO_2W {
         wchar_t_to_string(self.pLocation)
     }
     fn get_state(&self) -> u64 {
-        self.Status as u64;
+        self.Status as u64
     }
     fn get_port_name(&self) -> String {
         wchar_t_to_string(self.pPortName)
