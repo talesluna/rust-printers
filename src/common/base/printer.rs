@@ -1,4 +1,3 @@
-
 use std::fmt::{Debug, Error, Formatter};
 
 use super::job::PrinterJob;
@@ -23,7 +22,7 @@ pub struct Printer {
     pub name: String,
 
     /**
-     * Name of Printer exactly as on system
+     * Name of Printer exactly as on a system
      */
     pub system_name: String,
 
@@ -33,17 +32,17 @@ pub struct Printer {
     pub driver_name: String,
 
     /**
-     * Uri of printer (default is empty string)
+     * Uri of printer (default is an empty string)
      */
     pub uri: String,
 
     /**
-     * Name of printer port (default is empty string)
+     * Name of printer port (default is an empty string)
      */
     pub port_name: String,
 
     /**
-     * Name of printer port (default is empty string)
+     * Name of printer port (default is an empty string)
      */
     pub processor: String,
 
@@ -53,12 +52,12 @@ pub struct Printer {
     pub data_type: String,
 
     /**
-     * Name of printer port (default is empty string)
+     * Name of printer port (default is an empty string)
      */
     pub description: String,
 
     /**
-     * Location definition of printer (default is empty string)
+     * Location definition of printer (default is an empty string)
      */
     pub location: String,
 
@@ -121,34 +120,35 @@ impl Debug for Printer {
 
 impl Clone for Printer {
     fn clone(&self) -> Printer {
-        return Printer {
+        Printer {
             name: self.name.clone(),
             state: self.state.clone(),
             state_reasons: self.state_reasons.clone(),
             uri: self.uri.clone(),
             location: self.location.clone(),
             port_name: self.port_name.clone(),
-            is_default: self.is_default.clone(),
+            is_default: self.is_default,
             system_name: self.system_name.clone(),
             driver_name: self.driver_name.clone(),
-            is_shared: self.is_shared.clone(),
+            is_shared: self.is_shared,
             data_type: self.data_type.clone(),
             description: self.description.clone(),
             processor: self.processor.clone(),
-        };
+        }
     }
 }
 
 impl Printer {
-    pub(crate) fn from_platform_printer_getters(platform_printer: &dyn PlatformPrinterGetters) -> Printer {
-
+    pub(crate) fn from_platform_printer_getters(
+        platform_printer: &dyn PlatformPrinterGetters,
+    ) -> Printer {
         let mut state_reasons = platform_printer.get_state_reasons();
 
         if state_reasons.is_empty() {
             state_reasons.push("none".to_string());
         }
 
-        return Printer {
+        Printer {
             name: platform_printer.get_name(),
             system_name: platform_printer.get_system_name(),
             driver_name: platform_printer.get_marker_and_model(),
@@ -160,44 +160,55 @@ impl Printer {
             data_type: platform_printer.get_data_type(),
             processor: platform_printer.get_processor(),
             description: platform_printer.get_description(),
-            state: PrinterState::from_platform_state(platform_printer.get_state(), state_reasons.join(",").as_str()),
-            state_reasons
-        };
+            state: PrinterState::from_platform_state(
+                platform_printer.get_state(),
+                state_reasons.join(",").as_str(),
+            ),
+            state_reasons,
+        }
     }
 
     /**
-     * Print bytes with self printer instance
+     * Print bytes
      */
-    pub fn print(&self, buffer: &[u8], job_name: Option<&str>) -> Result<(), &'static str> {
-        return crate::Platform::print(self.system_name.as_str(), buffer, job_name);
+    pub fn print(
+        &self,
+        buffer: &[u8],
+        job_name: Option<&str>,
+        options: &[(&str, &str)],
+    ) -> Result<u64, &'static str> {
+        crate::Platform::print(self.system_name.as_str(), buffer, job_name, options)
     }
 
     /**
-     * Print specific file with self printer instance
+     * Print file
      */
-    pub fn print_file(&self, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str> {
-        return crate::Platform::print_file(self.system_name.as_str(), file_path, job_name);
+    pub fn print_file(
+        &self,
+        file_path: &str,
+        job_name: Option<&str>,
+        options: &[(&str, &str)],
+    ) -> Result<u64, &'static str> {
+        crate::Platform::print_file(self.system_name.as_str(), file_path, job_name, options)
     }
-    
+
     /**
-     * Return vec of active jobs of printer
+     * Return active jobs
      */
     pub fn get_active_jobs(&self) -> Vec<PrinterJob> {
-        return crate::Platform::get_printer_jobs(self.system_name.as_str(), true);
+        crate::Platform::get_printer_jobs(self.system_name.as_str(), true)
     }
 
     /**
-     * Return vec of a historic jobs of printer
+     * Return historic jobs
      */
     pub fn get_job_history(&self) -> Vec<PrinterJob> {
-        return crate::Platform::get_printer_jobs(self.system_name.as_str(), false);
+        crate::Platform::get_printer_jobs(self.system_name.as_str(), false)
     }
-
 }
-
 
 impl PrinterState {
     pub(crate) fn from_platform_state(platform_state: u64, state_reasons: &str) -> Self {
-        return crate::Platform::parse_printer_state(platform_state, state_reasons);
+        crate::Platform::parse_printer_state(platform_state, state_reasons)
     }
 }

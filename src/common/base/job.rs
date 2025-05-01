@@ -21,11 +21,11 @@ pub struct PrinterJob {
      */
     pub id: u64,
     /**
-     * Visual name/title of job
+     * Visual name/title of a job
      */
     pub name: String,
     /**
-     * Job Status, indicates how the job is currently
+     * Job Status indicates how the job is currently
      */
     pub state: PrinterJobState,
     /**
@@ -33,15 +33,15 @@ pub struct PrinterJob {
      */
     pub media_type: String,
     /**
-     * Date when job was created
+     * Date when a job was created
      */
     pub created_at: SystemTime,
     /**
-     * Date when job was processed or started printing
+     * Date when a job was processed or started printing
      */
     pub processed_at: Option<SystemTime>,
     /**
-     * Date when job was completed
+     * Date when a job was completed
      */
     pub completed_at: Option<SystemTime>,
     /**
@@ -54,7 +54,7 @@ impl PrinterJob {
     pub(crate) fn from_platform_printer_job_getters(
         platform_printer_job: &dyn PlatformPrinterJobGetters,
     ) -> Self {
-        return PrinterJob {
+        PrinterJob {
             id: platform_printer_job.get_id(),
             name: platform_printer_job.get_name(),
             state: PrinterJobState::from_platform_state(platform_printer_job.get_state()),
@@ -63,7 +63,7 @@ impl PrinterJob {
             processed_at: platform_printer_job.get_processed_at(),
             completed_at: platform_printer_job.get_completed_at(),
             printer_name: platform_printer_job.get_printer(),
-        };
+        }
     }
 }
 
@@ -95,6 +95,6 @@ impl Debug for PrinterJob {
 
 impl PrinterJobState {
     pub(crate) fn from_platform_state(platform_state: u64) -> Self {
-        return crate::Platform::parse_printer_job_state(platform_state);
+        crate::Platform::parse_printer_job_state(platform_state)
     }
 }
