@@ -71,8 +71,8 @@ fn main() {
     // Get a printer by the name
     let my_printer = get_printer_by_name("my_printer");
     if my_printer.is_some() {
-        my_printer.unwrap().print_file("notes.txt", None, &[]);
-        // Err("") or Ok(())
+        let job_id = my_printer.unwrap().print_file("notes.txt", None, &[]);
+        // Err("...") or Ok(())
     }
 
     // Use the default printer
@@ -83,10 +83,9 @@ fn main() {
             ("document-format", "application/vnd.cups-raw"),
             ("copies", "2"),
         ];
-        default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"), &options);
-        // Ok(())
+        let job_id = default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"), &options);
+        // Err("...") or Ok(())
     }
 
 }
-
 ```

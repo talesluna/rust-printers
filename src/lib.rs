@@ -4,39 +4,33 @@
 //!
 //! Printers can provide a list of printers available on the system and send print jobs to them
 //!
-//! ```rust
+//! ```rust,ignore
 //! use printers::{get_printer_by_name, get_default_printer, get_printers};
 //!
-//! fn main() {
+//! // Iterate all available printers
+//! for printer in get_printers() {
+//!     println!("{:?}", printer);
+//! }
 //!
-//!    // Iterate all available printers
-//!    for printer in get_printers() {
-//!        println!("{:?}", printer);
-//!    }
+//! // Get a printer by the name
+//! let my_printer = get_printer_by_name("my_printer");
+//! if my_printer.is_some() {
+//!     let job_id = my_printer.unwrap().print_file("notes.txt", None, &[]);
+//!     // Err("...") or Ok(u64)
+//! }
 //!
-//!    // Get a printer by the name
-//!    let my_printer = get_printer_by_name("my_printer");
-//!    if my_printer.is_some() {
-//!        my_printer.unwrap().print_file("notes.txt", None, &[]);
-//!        // Err("cupsPrintFile failed") or Ok(())
-//!    }
-//!
-//!    // Use the default printer
-//!    let default_printer = get_default_printer();
-//!    if default_printer.is_some() {
-//!        // options are currently UNIX-only. see https://www.cups.org/doc/options.html
-//!        let options = [
-//!            ("document-format", "application/vnd.cups-raw"),
-//!            ("copies", "2"),
-//!        ];
-//!        default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"), &options);
-//!        // Ok(())
-//!   }
-//!
-//!}
+//! // Use the default printer
+//! let default_printer = get_default_printer();
+//! if default_printer.is_some() {
+//!     // options are currently UNIX-only. see https://www.cups.org/doc/options.html
+//!     let options = [
+//!         ("document-format", "application/vnd.cups-raw"),
+//!         ("copies", "2"),
+//!     ];
+//!     let job_id = default_printer.unwrap().print("my content".as_bytes(), Some("My Job"), &options);
+//!     // Err("...") or Ok(u64)
+//! }
 //! ```
-//!
-//!
 
 struct Platform;
 
@@ -48,27 +42,27 @@ mod unix;
 #[cfg(target_family = "windows")]
 mod windows;
 
-use common::{traits::platform::PlatformActions, base::printer::Printer};
+use common::{base::printer::Printer, traits::platform::PlatformActions};
 
 /**
- * Return all available printers on system
+ * Return all available printers on a system
  */
 pub fn get_printers() -> Vec<Printer> {
-    return Platform::get_printers();
+    Platform::get_printers()
 }
 
 /**
- * If you known the printer nme you can try get the printer directly
+ * If you know the printer name, you can try to get the printer directly
  */
 pub fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
-    return Platform::get_printer_by_name(printer_name);
+    Platform::get_printer_by_name(printer_name)
 }
 
 /**
  * Return the default system printer
  */
 pub fn get_default_printer() -> Option<Printer> {
-    return Platform::get_default_printer();
+    Platform::get_default_printer()
 }
 
 #[cfg(target_family = "unix")]
@@ -77,6 +71,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "for manual testing only - requires actual printer hardware"]
     fn test_zpl_with_cups_options() {
         //println!("{:?}", get_printers());
         let printer = get_printer_by_name("Zebra Technologies ZTC ZD410-203dpi ZPL").unwrap();
@@ -107,6 +102,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "for manual testing only - requires actual printer hardware"]
     fn test_zpl_with_win_options() {
         //println!("{:?}", get_printers());
         let printer = get_printer_by_name("Microsoft Print to PDF").unwrap();

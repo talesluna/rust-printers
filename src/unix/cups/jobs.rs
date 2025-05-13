@@ -10,7 +10,7 @@ use std::ffi::CString;
 use std::{slice, time::SystemTime};
 
 #[link(name = "cups")]
-extern "C" {
+unsafe extern "C" {
 
     fn cupsPrintFile(
         printer_name: *const c_char,
@@ -23,7 +23,6 @@ extern "C" {
     fn cupsGetJobs(
         jobs: *mut *mut CupsJobsS,
         name: *const c_char,
-        // how: c_int,
         myjobs: c_int,
         whichjobs: c_int,
     ) -> c_int;
