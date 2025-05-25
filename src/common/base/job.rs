@@ -98,3 +98,17 @@ impl PrinterJobState {
         crate::Platform::parse_printer_job_state(platform_state)
     }
 }
+
+pub struct PrinterJobOptions<'a> {
+    pub name: Option<&'a str>,
+    pub raw_properties: &'a [(&'a str, &'a str)],
+}
+
+impl PrinterJobOptions<'_> {
+    pub fn none() -> Self {
+        return PrinterJobOptions {
+            name: None,
+            raw_properties: &[],
+        }
+    }
+}

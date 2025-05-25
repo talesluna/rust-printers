@@ -1,13 +1,16 @@
+use libc::{c_char, c_int, time_t};
+use std::{slice, time::SystemTime};
+
 use crate::{
-    common::traits::platform::PlatformPrinterJobGetters,
+    common::{
+        base::options::OptionsCollection,
+        traits::platform::PlatformPrinterJobGetters,
+    },
     unix::utils::{
         date::time_t_to_system_time,
         strings::{c_char_to_string, str_to_cstring},
     },
 };
-use libc::{c_char, c_int, time_t};
-use std::ffi::CString;
-use std::{slice, time::SystemTime};
 
 #[link(name = "cups")]
 unsafe extern "C" {
@@ -111,43 +114,30 @@ pub fn print_file(
     printer_name: &str,
     file_path: &str,
     job_name: Option<&str>,
-    options: &[(&str, &str)],
+    raw_options: &[(&str, &str)],
 ) -> Result<u64, &'static str> {
     unsafe {
+
         let printer = &str_to_cstring(printer_name);
         let filename = str_to_cstring(file_path);
         let title = str_to_cstring(job_name.unwrap_or(file_path));
 
-        // You ensure those heap-allocated strings:
-        // - Stay in memory
-        // - Are not dropped
-        // - Live through the entire FFI call
-        // Then, when print_file() ends, the cstrings Vec is dropped after the FFI call is done, so memory cleanup happens safely.
-        let mut cstrings: Vec<CString> = Vec::with_capacity(options.len() * 2);
-
-        let mut cup_opts: Vec<CupsOptionT> = Vec::with_capacity(options.len());
-
-        for (key, value) in options.iter() {
-            let c_key = str_to_cstring(key);
-            let c_value = str_to_cstring(value);
-            cup_opts.push(CupsOptionT {
-                name: c_key.as_ptr(),
-                value: c_value.as_ptr(),
-            });
-            cstrings.push(c_key);
-            cstrings.push(c_value);
-        }
+        let options = OptionsCollection::new(raw_options, |(key, value)| {
+            let key = str_to_cstring(key);
+            let value = str_to_cstring(value);
+            let option = CupsOptionT {
+                name: key.as_ptr(),
+                value: value.as_ptr()
+            };
+            return ((key, value), option);
+        });
 
         let result = cupsPrintFile(
             printer.as_ptr(),
             filename.as_ptr(),
             title.as_ptr(),
-            cup_opts.len() as c_int,
-            if cup_opts.is_empty() {
-                std::ptr::null()
-            } else {
-                cup_opts.as_ptr()
-            },
+            options.size as c_int,
+            options.as_ptr(),
         );
 
         if result == 0 {

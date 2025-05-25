@@ -3,7 +3,7 @@ use std::str;
 
 use crate::common::{
     base::{
-        job::{PrinterJob, PrinterJobState},
+        job::{PrinterJob, PrinterJobOptions, PrinterJobState},
         printer::{Printer, PrinterState},
     },
     traits::platform::{PlatformActions, PlatformPrinterGetters},
@@ -27,8 +27,7 @@ impl PlatformActions for crate::Platform {
     fn print(
         printer_system_name: &str,
         buffer: &[u8],
-        job_name: Option<&str>,
-        options: &[(&str, &str)],
+        options: PrinterJobOptions
     ) -> Result<u64, &'static str> {
         let path = utils::file::save_tmp_file(buffer);
         if path.is_some() {
@@ -36,8 +35,7 @@ impl PlatformActions for crate::Platform {
             Self::print_file(
                 printer_system_name,
                 file_path.to_str().unwrap(),
-                job_name,
-                options,
+                options
             )
         } else {
             Err("Failed to create temp file")
@@ -47,10 +45,14 @@ impl PlatformActions for crate::Platform {
     fn print_file(
         printer_system_name: &str,
         file_path: &str,
-        job_name: Option<&str>,
-        options: &[(&str, &str)],
+        options: PrinterJobOptions
     ) -> Result<u64, &'static str> {
-        cups::jobs::print_file(printer_system_name, file_path, job_name, options)
+        cups::jobs::print_file(
+            printer_system_name, 
+            file_path, 
+            options.name, 
+            options.raw_properties
+        )
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {

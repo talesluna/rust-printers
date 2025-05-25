@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Error, Formatter};
 
-use super::job::PrinterJob;
+use super::job::{PrinterJob, PrinterJobOptions};
 use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
 
 #[derive(Debug, Clone)]
@@ -174,10 +174,9 @@ impl Printer {
     pub fn print(
         &self,
         buffer: &[u8],
-        job_name: Option<&str>,
-        options: &[(&str, &str)],
+        options: PrinterJobOptions
     ) -> Result<u64, &'static str> {
-        crate::Platform::print(self.system_name.as_str(), buffer, job_name, options)
+        crate::Platform::print(self.system_name.as_str(), buffer, options)
     }
 
     /**
@@ -186,10 +185,9 @@ impl Printer {
     pub fn print_file(
         &self,
         file_path: &str,
-        job_name: Option<&str>,
-        options: &[(&str, &str)],
+        options: PrinterJobOptions
     ) -> Result<u64, &'static str> {
-        crate::Platform::print_file(self.system_name.as_str(), file_path, job_name, options)
+        crate::Platform::print_file(self.system_name.as_str(), file_path, options)
     }
 
     /**

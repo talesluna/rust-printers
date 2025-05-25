@@ -1,5 +1,5 @@
 use crate::common::base::{
-    job::PrinterJobState,
+    job::{PrinterJobOptions, PrinterJobState},
     printer::{Printer, PrinterState},
 };
 use std::time::SystemTime;
@@ -36,14 +36,12 @@ pub trait PlatformActions {
     fn print(
         printer_system_name: &str,
         buffer: &[u8],
-        job_name: Option<&str>,
-        options: &[(&str, &str)],
+        options: PrinterJobOptions
     ) -> Result<u64, &'static str>;
     fn print_file(
         printer_system_name: &str,
         file_path: &str,
-        job_name: Option<&str>,
-        options: &[(&str, &str)],
+        options: PrinterJobOptions
     ) -> Result<u64, &'static str>;
     fn get_printer_jobs(
         printer_name: &str,
