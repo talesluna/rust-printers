@@ -171,11 +171,7 @@ impl Printer {
     /**
      * Print bytes
      */
-    pub fn print(
-        &self,
-        buffer: &[u8],
-        options: PrinterJobOptions
-    ) -> Result<u64, &'static str> {
+    pub fn print(&self, buffer: &[u8], options: PrinterJobOptions) -> Result<u64, &'static str> {
         crate::Platform::print(self.system_name.as_str(), buffer, options)
     }
 
@@ -185,7 +181,7 @@ impl Printer {
     pub fn print_file(
         &self,
         file_path: &str,
-        options: PrinterJobOptions
+        options: PrinterJobOptions,
     ) -> Result<u64, &'static str> {
         crate::Platform::print_file(self.system_name.as_str(), file_path, options)
     }

@@ -109,6 +109,6 @@ impl PrinterJobOptions<'_> {
         return PrinterJobOptions {
             name: None,
             raw_properties: &[],
-        }
+        };
     }
 }

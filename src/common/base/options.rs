@@ -31,5 +31,4 @@ impl<T, G> OptionsCollection<T, G> {
     pub fn to_vec(&self) -> &Vec<G> {
         return &self.items;
     }
-
 }

@@ -2,10 +2,7 @@ use libc::{c_char, c_int, time_t};
 use std::{slice, time::SystemTime};
 
 use crate::{
-    common::{
-        base::options::OptionsCollection,
-        traits::platform::PlatformPrinterJobGetters,
-    },
+    common::{base::options::OptionsCollection, traits::platform::PlatformPrinterJobGetters},
     unix::utils::{
         date::time_t_to_system_time,
         strings::{c_char_to_string, str_to_cstring},
@@ -117,7 +114,6 @@ pub fn print_file(
     raw_options: &[(&str, &str)],
 ) -> Result<u64, &'static str> {
     unsafe {
-
         let printer = &str_to_cstring(printer_name);
         let filename = str_to_cstring(file_path);
         let title = str_to_cstring(job_name.unwrap_or(file_path));
@@ -127,7 +123,7 @@ pub fn print_file(
             let value = str_to_cstring(value);
             let option = CupsOptionT {
                 name: key.as_ptr(),
-                value: value.as_ptr()
+                value: value.as_ptr(),
             };
             return ((key, value), option);
         });

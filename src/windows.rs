@@ -23,7 +23,7 @@ impl PlatformActions for crate::Platform {
     fn print(
         printer_system_name: &str,
         buffer: &[u8],
-        options: PrinterJobOptions
+        options: PrinterJobOptions,
     ) -> Result<u64, &'static str> {
         winspool::jobs::print_buffer(printer_system_name, options.name, buffer)
     }
@@ -35,11 +35,7 @@ impl PlatformActions for crate::Platform {
     ) -> Result<u64, &'static str> {
         let buffer = utils::file::get_file_as_bytes(file_path);
         if buffer.is_some() {
-            Self::print(
-                printer_system_name,
-                &buffer.unwrap(),
-                options
-            )
+            Self::print(printer_system_name, &buffer.unwrap(), options)
         } else {
             Err("failed to read file")
         }
