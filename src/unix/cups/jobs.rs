@@ -125,7 +125,9 @@ pub fn print_file(
                 name: key.as_ptr(),
                 value: value.as_ptr(),
             };
-            return ((key, value), option);
+            
+            ((key, value), option)
+
         });
 
         let result = cupsPrintFile(

@@ -106,9 +106,9 @@ pub struct PrinterJobOptions<'a> {
 
 impl PrinterJobOptions<'_> {
     pub fn none() -> Self {
-        return PrinterJobOptions {
+        PrinterJobOptions {
             name: None,
             raw_properties: &[],
-        };
+        }
     }
 }

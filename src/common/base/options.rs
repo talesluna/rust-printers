@@ -25,10 +25,10 @@ impl<T, G> OptionsCollection<T, G> {
     }
 
     pub fn as_ptr(&self) -> *const G {
-        return self.items.as_ptr();
+        self.items.as_ptr()
     }
 
     pub fn to_vec(&self) -> &Vec<G> {
-        return &self.items;
+        &self.items
     }
 }
