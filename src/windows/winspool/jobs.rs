@@ -149,7 +149,6 @@ pub fn print_buffer(
     printer_system_name: &str,
     job_name: Option<&str>,
     buffer: &[u8],
-    _options: &[(&str, &str)], // currently unused, no-op
 ) -> Result<u64, &'static str> {
     unsafe {
         let printer_name = str_to_wide_string(printer_system_name);

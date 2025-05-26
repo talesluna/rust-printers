@@ -1,6 +1,4 @@
-use std::path::Path;
-
-use crate::common::base::job::PrinterJobState;
+use crate::common::base::job::{PrinterJobOptions, PrinterJobState};
 use crate::common::base::printer::PrinterState;
 use crate::common::base::{job::PrinterJob, printer::Printer};
 use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
@@ -25,27 +23,22 @@ impl PlatformActions for crate::Platform {
     fn print(
         printer_system_name: &str,
         buffer: &[u8],
-        job_name: Option<&str>,
-        options: &[(&str, &str)],
+        options: PrinterJobOptions
     ) -> Result<u64, &'static str> {
-        winspool::jobs::print_buffer(printer_system_name, job_name, buffer, options)
+        winspool::jobs::print_buffer(printer_system_name, options.name, buffer)
     }
 
     fn print_file(
         printer_system_name: &str,
         file_path: &str,
-        job_name: Option<&str>,
-        options: &[(&str, &str)],
+        options: PrinterJobOptions,
     ) -> Result<u64, &'static str> {
         let buffer = utils::file::get_file_as_bytes(file_path);
         if buffer.is_some() {
-            let job_name =
-                job_name.unwrap_or(Path::new(file_path).file_name().unwrap().to_str().unwrap());
             Self::print(
                 printer_system_name,
                 &buffer.unwrap(),
-                Some(job_name),
-                options,
+                options
             )
         } else {
             Err("failed to read file")
