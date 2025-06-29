@@ -6,29 +6,34 @@
 //!
 //! ```rust,ignore
 //! use printers::{get_printer_by_name, get_default_printer, get_printers};
-//!
-//! // Iterate all available printers
-//! for printer in get_printers() {
-//!     println!("{:?}", printer);
-//! }
-//!
-//! // Get a printer by the name
-//! let my_printer = get_printer_by_name("my_printer");
-//! if my_printer.is_some() {
-//!     let job_id = my_printer.unwrap().print_file("notes.txt", None, &[]);
-//!     // Err("...") or Ok(u64)
-//! }
-//!
-//! // Use the default printer
-//! let default_printer = get_default_printer();
-//! if default_printer.is_some() {
-//!     // options are currently UNIX-only. see https://www.cups.org/doc/options.html
-//!     let options = [
-//!         ("document-format", "application/vnd.cups-raw"),
-//!         ("copies", "2"),
-//!     ];
-//!     let job_id = default_printer.unwrap().print("my content".as_bytes(), Some("My Job"), &options);
-//!     // Err("...") or Ok(u64)
+//! 
+//! fn main() {
+//! 
+//!     // Iterate all available printers
+//!     for printer in get_printers() {
+//!         println!("{:?}", printer);
+//!     }
+//! 
+//!     // Get a printer by the name
+//!     let my_printer = get_printer_by_name("my_printer");
+//!     if my_printer.is_some() {
+//!         let job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::none());
+//!         // Err("...") or Ok(())
+//!     }
+//! 
+//!     // Use the default printer
+//!     let default_printer = get_default_printer();
+//!     if default_printer.is_some() {
+//!         let job_id = default_printer.unwrap().print("dlrow olleh".as_bytes(), PrinterJobOptions {
+//!             name: None,
+//!             // options are currently UNIX-only. see https://www.cups.org/doc/options.html
+//!             raw_properties: &[
+//!                 ("document-format", "application/vnd.cups-raw"),
+//!                 ("copies", "2"),
+//!             ],
+//!         });
+//!         // Err("...") or Ok(())
+//!     }
 //! }
 //! ```
 

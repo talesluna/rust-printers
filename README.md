@@ -31,14 +31,20 @@ let printers = get_printers();
 **Create print job of an byte array**
 
 ```rust
-let job_id = printer.print("42".as_bytes(), None, &[]);
+let job_id = printer.print("42".as_bytes(), PrinterJobOptions::none());
 // Result<u64, &'static str>
 ```
 
 **Create print job of an file**
 
 ```rust
-let job_id = printer.print_file("my_file/example/path.txt", None, &[]);
+let job_id = printer.print_file("my_file/example/path.txt", PrinterJobOptions {
+    name: Some("My print job"),
+    raw_properties: &[
+        ("copies", "2"),
+        ("others", "prop"),
+    ],
+});
 // Result<u64, &'static str>
 ```
 
@@ -71,21 +77,22 @@ fn main() {
     // Get a printer by the name
     let my_printer = get_printer_by_name("my_printer");
     if my_printer.is_some() {
-        let job_id = my_printer.unwrap().print_file("notes.txt", None, &[]);
+        let job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::none());
         // Err("...") or Ok(())
     }
 
     // Use the default printer
     let default_printer = get_default_printer();
     if default_printer.is_some() {
-        // options are currently UNIX-only. see https://www.cups.org/doc/options.html
-        let options = [
-            ("document-format", "application/vnd.cups-raw"),
-            ("copies", "2"),
-        ];
-        let job_id = default_printer.unwrap().print("dlrow olleh".as_bytes(), Some("My Job"), &options);
+        let job_id = default_printer.unwrap().print("dlrow olleh".as_bytes(), PrinterJobOptions {
+            name: None,
+            // options are currently UNIX-only. see https://www.cups.org/doc/options.html
+            raw_properties: &[
+                ("document-format", "application/vnd.cups-raw"),
+                ("copies", "2"),
+            ],
+        });
         // Err("...") or Ok(())
     }
-
 }
 ```
