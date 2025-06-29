@@ -6,21 +6,21 @@
 //!
 //! ```rust,ignore
 //! use printers::{get_printer_by_name, get_default_printer, get_printers};
-//! 
+//!
 //! fn main() {
-//! 
+//!
 //!     // Iterate all available printers
 //!     for printer in get_printers() {
 //!         println!("{:?}", printer);
 //!     }
-//! 
+//!
 //!     // Get a printer by the name
 //!     let my_printer = get_printer_by_name("my_printer");
 //!     if my_printer.is_some() {
 //!         let job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::none());
 //!         // Err("...") or Ok(())
 //!     }
-//! 
+//!
 //!     // Use the default printer
 //!     let default_printer = get_default_printer();
 //!     if default_printer.is_some() {
