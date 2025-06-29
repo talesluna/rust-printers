@@ -17,5 +17,5 @@ pub fn save_tmp_file(buffer: &[u8]) -> Option<PathBuf> {
     let mut tmp_file = File::create(&file_path).unwrap();
     let save = tmp_file.write(buffer);
 
-    return if save.is_ok() { Some(file_path) } else { None };
+    if save.is_ok() { Some(file_path) } else { None }
 }

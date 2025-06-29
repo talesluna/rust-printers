@@ -1,15 +1,19 @@
 #![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
 
 use libc::{c_int, c_uint, c_ulong, c_void, wchar_t};
 use std::{ptr, slice};
 
 use crate::{
     common::traits::platform::PlatformPrinterGetters,
-    windows::utils::{memory::{alloc_s, dealloc_s}, strings::{str_to_wide_string, wchar_t_to_string}}
+    windows::utils::{
+        memory::{alloc_s, dealloc_s},
+        strings::{str_to_wide_string, wchar_t_to_string},
+    },
 };
 
 #[link(name = "winspool")]
-extern "system" {
+unsafe extern "system" {
 
     fn EnumPrintersW(
         Flags: c_ulong,
@@ -57,46 +61,46 @@ pub struct PRINTER_INFO_2W {
 
 impl PlatformPrinterGetters for PRINTER_INFO_2W {
     fn get_name(&self) -> String {
-        return wchar_t_to_string(self.pPrinterName);
+        wchar_t_to_string(self.pPrinterName)
     }
     fn get_is_default(&self) -> bool {
         let mut name_size: c_ulong = 0;
-        return unsafe {
+        unsafe {
             GetDefaultPrinterW(ptr::null_mut(), &mut name_size);
             let mut buffer: Vec<wchar_t> = vec![0; name_size as usize];
             GetDefaultPrinterW(buffer.as_mut_ptr(), &mut name_size);
             *self.pPrinterName == *buffer.as_ptr()
-        };
+        }
     }
     fn get_system_name(&self) -> String {
-        return wchar_t_to_string(self.pPrinterName);
+        wchar_t_to_string(self.pPrinterName)
     }
     fn get_marker_and_model(&self) -> String {
-        return wchar_t_to_string(self.pDriverName);
+        wchar_t_to_string(self.pDriverName)
     }
     fn get_is_shared(&self) -> bool {
-        return (self.Attributes & 0x00000008) == 8;
+        (self.Attributes & 0x00000008) == 8
     }
     fn get_uri(&self) -> String {
-        return "".to_string();
+        "".to_string()
     }
     fn get_location(&self) -> String {
-        return wchar_t_to_string(self.pLocation);
+        wchar_t_to_string(self.pLocation)
     }
     fn get_state(&self) -> u64 {
-        return self.Status as u64;
+        self.Status as u64
     }
     fn get_port_name(&self) -> String {
-        return wchar_t_to_string(self.pPortName);
+        wchar_t_to_string(self.pPortName)
     }
     fn get_processor(&self) -> String {
-        return wchar_t_to_string(self.pPrintProcessor);
+        wchar_t_to_string(self.pPrintProcessor)
     }
     fn get_description(&self) -> String {
-        return wchar_t_to_string(self.pComment);
+        wchar_t_to_string(self.pComment)
     }
     fn get_data_type(&self) -> String {
-        return wchar_t_to_string(self.pDatatype);
+        wchar_t_to_string(self.pDatatype)
     }
     fn get_state_reasons(&self) -> Vec<String> {
         // NOTE: These reasons are virtual descriptions based on printer status
@@ -127,10 +131,11 @@ impl PlatformPrinterGetters for PRINTER_INFO_2W {
             (0x00400000, "door_open"),
             (0x00800000, "server_unknown"),
             (0x01000000, "power_save"),
-        ].iter()
-            .filter(|v| self.Status & v.0 != 0)
-            .map(|v| v.1.to_string())
-            .collect();
+        ]
+        .iter()
+        .filter(|v| self.Status & v.0 != 0)
+        .map(|v| v.1.to_string())
+        .collect();
     }
 }
 
@@ -141,12 +146,13 @@ pub fn enum_printers(name: Option<&str>) -> &'static [PRINTER_INFO_2W] {
     let mut bytes_needed: c_ulong = 0;
     let mut count_printers: c_ulong = 0;
     let mut buffer_ptr: *mut PRINTER_INFO_2W = ptr::null_mut();
-    let name_ptr = if name.is_none() {
-        ptr::null_mut()
-    } else {
-        let value = str_to_wide_string(name.unwrap());
-        value.as_ptr()
-    } as *const wchar_t;
+
+    // Store wide name in a variable so it lives long enough
+    let name_wide: Option<Vec<u16>> = name.map(str_to_wide_string);
+    let name_ptr = match &name_wide {
+        Some(vec) => vec.as_ptr(),
+        None => ptr::null(),
+    };
 
     for _ in 0..2 {
         let result = unsafe {
@@ -166,17 +172,16 @@ pub fn enum_printers(name: Option<&str>) -> &'static [PRINTER_INFO_2W] {
         }
 
         buffer_ptr = alloc_s::<PRINTER_INFO_2W>(bytes_needed);
-
     }
 
-    return unsafe { slice::from_raw_parts(buffer_ptr, count_printers as usize) };
+    unsafe { slice::from_raw_parts(buffer_ptr, count_printers as usize) }
 }
 
 /**
- * Returns the defualt printer filetring all printer
+ * Returns the default printer filtering all printers
  */
 pub fn get_default_printer() -> Option<&'static PRINTER_INFO_2W> {
-    return enum_printers(None).iter().find(|p| p.get_is_default());
+    enum_printers(None).iter().find(|p| p.get_is_default())
 }
 
 /**

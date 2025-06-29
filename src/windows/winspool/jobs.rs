@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+#![allow(non_camel_case_types)]
 
 use libc::{c_int, c_ulong, c_ushort, c_void, wchar_t};
 use std::{ptr, slice};
@@ -13,7 +14,7 @@ use crate::{
 };
 
 #[link(name = "winspool")]
-extern "system" {
+unsafe extern "system" {
     fn OpenPrinterW(
         pPrinterName: *const wchar_t,
         phPrinter: *mut *mut c_void,
@@ -101,27 +102,27 @@ pub struct JOB_INFO_1W {
 
 impl PlatformPrinterJobGetters for JOB_INFO_1W {
     fn get_id(&self) -> u64 {
-        return self.JobId.into();
+        self.JobId.into()
     }
 
     fn get_name(&self) -> String {
-        return wchar_t_to_string(self.pDocument);
+        wchar_t_to_string(self.pDocument)
     }
 
     fn get_state(&self) -> u64 {
-        return self.Status.into();
+        self.Status.into()
     }
 
     fn get_printer(&self) -> String {
-        return wchar_t_to_string(self.pPrinterName);
+        wchar_t_to_string(self.pPrinterName)
     }
 
     fn get_media_type(&self) -> String {
-        return wchar_t_to_string(self.pDatatype);
+        wchar_t_to_string(self.pDatatype)
     }
 
     fn get_created_at(&self) -> std::time::SystemTime {
-        return calculate_system_time(
+        calculate_system_time(
             self.Submitted.wYear,
             self.Submitted.wMonth,
             self.Submitted.wDay,
@@ -129,15 +130,15 @@ impl PlatformPrinterJobGetters for JOB_INFO_1W {
             self.Submitted.wMinute,
             self.Submitted.wSecond,
             self.Submitted.wMilliseconds,
-        );
+        )
     }
 
     fn get_processed_at(&self) -> Option<std::time::SystemTime> {
-        return Some(self.get_created_at());
+        Some(self.get_created_at())
     }
 
     fn get_completed_at(&self) -> Option<std::time::SystemTime> {
-        return Some(self.get_created_at());
+        Some(self.get_created_at())
     }
 }
 
@@ -148,7 +149,7 @@ pub fn print_buffer(
     printer_system_name: &str,
     job_name: Option<&str>,
     buffer: &[u8],
-) -> Result<(), &'static str> {
+) -> Result<u64, &'static str> {
     unsafe {
         let printer_name = str_to_wide_string(printer_system_name);
         let mut printer_handle: *mut c_void = ptr::null_mut();
@@ -162,7 +163,8 @@ pub fn print_buffer(
             return Err("OpenPrinterW failed");
         }
 
-        let mut pDocName = str_to_wide_string(job_name.unwrap_or(get_current_epoch().to_string().as_str()));
+        let mut pDocName =
+            str_to_wide_string(job_name.unwrap_or(get_current_epoch().to_string().as_str()));
         let mut pDatatype = str_to_wide_string("RAW");
 
         let doc_info = DocInfo1 {
@@ -171,7 +173,8 @@ pub fn print_buffer(
             pOutputFile: ptr::null_mut(),
         };
 
-        if StartDocPrinterW(printer_handle, 1, &doc_info) == 0 {
+        let job_id = StartDocPrinterW(printer_handle, 1, &doc_info);
+        if job_id == 0 {
             ClosePrinter(printer_handle);
             return Err("StartDocPrinterW failed");
         }
@@ -197,13 +200,13 @@ pub fn print_buffer(
         if write_result == 0 {
             return Err("WritePrinter failed");
         }
-    }
 
-    return Ok(());
+        Ok(job_id as u64)
+    }
 }
 
 /**
- * Retrive print jobs of specific printer with EnumJobsW
+ * Retrieve print jobs of a specific printer with EnumJobsW
  */
 pub fn enum_printer_jobs(
     printer_system_name: &str,
@@ -254,9 +257,9 @@ pub fn enum_printer_jobs(
         return Err("EnumJobsW failed");
     }
 
-    return Ok(if jobs_count > 0 {
+    Ok(if jobs_count > 0 {
         unsafe { slice::from_raw_parts(buffer_ptr as *const JOB_INFO_1W, jobs_count as usize) }
     } else {
         &[]
-    });
+    })
 }

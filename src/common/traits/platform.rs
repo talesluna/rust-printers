@@ -1,8 +1,8 @@
-use std::time::SystemTime;
 use crate::common::base::{
-    job::PrinterJobState, 
-    printer::{Printer, PrinterState}
+    job::{PrinterJobOptions, PrinterJobState},
+    printer::{Printer, PrinterState},
 };
+use std::time::SystemTime;
 
 pub trait PlatformPrinterGetters {
     fn get_name(&self) -> String;
@@ -33,9 +33,20 @@ pub trait PlatformPrinterJobGetters {
 
 pub trait PlatformActions {
     fn get_printers() -> Vec<Printer>;
-    fn print(printer_system_name: &str, buffer: &[u8], job_name: Option<&str>) -> Result<(), &'static str>;    
-    fn print_file(printer_system_name: &str, file_path: &str, job_name: Option<&str>) -> Result<(), &'static str>;
-    fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<crate::common::base::job::PrinterJob>;
+    fn print(
+        printer_system_name: &str,
+        buffer: &[u8],
+        options: PrinterJobOptions,
+    ) -> Result<u64, &'static str>;
+    fn print_file(
+        printer_system_name: &str,
+        file_path: &str,
+        options: PrinterJobOptions,
+    ) -> Result<u64, &'static str>;
+    fn get_printer_jobs(
+        printer_name: &str,
+        active_only: bool,
+    ) -> Vec<crate::common::base::job::PrinterJob>;
     fn get_default_printer() -> Option<Printer>;
     fn get_printer_by_name(printer_name: &str) -> Option<Printer>;
     fn parse_printer_state(platform_state: u64, state_reasons: &str) -> PrinterState;
