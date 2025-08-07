@@ -158,7 +158,7 @@ pub fn enum_printers(name: Option<&str>) -> &'static [PRINTER_INFO_2W] {
         let result = unsafe {
             EnumPrintersW(
                 0x00000002 | 0x00000004,
-                name_ptr,
+                name_ptr as *const wchar_t,
                 2,
                 buffer_ptr,
                 bytes_needed,

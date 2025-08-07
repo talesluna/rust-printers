@@ -104,4 +104,24 @@ impl PlatformActions for crate::Platform {
             _ => PrinterJobState::UNKNOWN,
         }
     }
+
+    fn set_job_state(
+        printer_name: &str,
+        job_id: u64,
+        state: PrinterJobState,
+    ) -> Result<(), &'static str> {
+        let result = match state {
+            PrinterJobState::PENDING => cups::jobs::restart_job(printer_name, job_id as i32),
+            PrinterJobState::PROCESSING => cups::jobs::release_job(printer_name, job_id as i32),
+            PrinterJobState::PAUSED => cups::jobs::hold_job(printer_name, job_id as i32),
+            PrinterJobState::CANCELLED => cups::jobs::cancel_job(printer_name, job_id as i32),
+            _ => false,
+        };
+
+        return if result {
+            Ok(())
+        } else {
+            Err("cups method failed")
+        };
+    }
 }

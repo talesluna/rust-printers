@@ -99,6 +99,7 @@ impl PrinterJobState {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct PrinterJobOptions<'a> {
     pub name: Option<&'a str>,
     pub raw_properties: &'a [(&'a str, &'a str)],

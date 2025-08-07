@@ -1,9 +1,12 @@
 use std::fmt::{Debug, Error, Formatter};
 
 use super::job::{PrinterJob, PrinterJobOptions};
-use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
+use crate::common::{
+    base::job::PrinterJobState,
+    traits::platform::{PlatformActions, PlatformPrinterGetters},
+};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum PrinterState {
     READY,
     OFFLINE,
@@ -198,6 +201,34 @@ impl Printer {
      */
     pub fn get_job_history(&self) -> Vec<PrinterJob> {
         crate::Platform::get_printer_jobs(self.system_name.as_str(), false)
+    }
+
+    /**
+     * Pause an printer job
+     */
+    pub fn pause_job(&self, job_id: u64) -> Result<(), &'static str> {
+        crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::PAUSED)
+    }
+
+    /**
+     * Resume an paused printer job
+     */
+    pub fn resume_job(&self, job_id: u64) -> Result<(), &'static str> {
+        crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::PROCESSING)
+    }
+
+    /**
+     * restart an printer job
+     */
+    pub fn restart_job(&self, job_id: u64) -> Result<(), &'static str> {
+        crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::PENDING)
+    }
+
+    /**
+     * Cancel an printer job
+     */
+    pub fn cancel_job(&self, job_id: u64) -> Result<(), &'static str> {
+        crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::CANCELLED)
     }
 }
 

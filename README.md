@@ -1,6 +1,6 @@
 # [Printers](https://crates.io/crates/printers): A printing APIs implementation for unix *(cups)* and windows *(winspool)*.
 
-Provides all system printers, create and get print jobs.
+Provides all system printers, create and manage print jobs.
 
 ![Crates.io Version](https://img.shields.io/crates/v/printers)
 ![Crates.io License](https://img.shields.io/crates/l/printers)
@@ -10,16 +10,16 @@ Provides all system printers, create and get print jobs.
 ## Documentation
 See the references in [docs.rs](https://docs.rs/printers).
 
-## Features
+## 🛠️ Features
 
 |  Target |    API   | List printers | List jobs | Print bytes and text files | Print PDF,images, etc... |
 |:-------:|:--------:|:-------------:|:---------:|:-----------------------:|:------------------------:|
 | Unix    | cups     |       ✅       |     ✅     |            ✅            |             ✅          |
 | Windows | winspool |       ✅       |     ✅     |            ✅            |             🤔**        |
 
-> ** On Windows this lib use RAW datatype to process printing. Expected output depends of printer firmware.
+> ** On Windows this lib use RAW datatype to process printing by default. Expected output depends of printer firmware.
 
-## Examples
+## 👇 Examples
 
 **Get all available printers**
 
@@ -42,7 +42,7 @@ let job_id = printer.print_file("my_file/example/path.txt", PrinterJobOptions {
     name: Some("My print job"),
     raw_properties: &[
         ("copies", "2"),
-        ("others", "prop"),
+        ("document-format", "XPS"),
     ],
 });
 // Result<u64, &'static str>
@@ -62,37 +62,22 @@ let printer = get_default_printer();
 // Option<Printer>
 ```
 
-**Simple compilation**
+**Manage state of printer job**
 
 ```rust
-use printers::{get_printer_by_name, get_default_printer, get_printers};
+// Pause
+printer.pause_job(123);
 
-fn main() {
+// Resume
+printer.resume_job(123);
 
-    // Iterate all available printers
-    for printer in get_printers() {
-        println!("{:?}", printer);
-    }
+// Restart
+printer.restart_job(123);
 
-    // Get a printer by the name
-    let my_printer = get_printer_by_name("my_printer");
-    if my_printer.is_some() {
-        let job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::none());
-        // Err("...") or Ok(())
-    }
-
-    // Use the default printer
-    let default_printer = get_default_printer();
-    if default_printer.is_some() {
-        let job_id = default_printer.unwrap().print("dlrow olleh".as_bytes(), PrinterJobOptions {
-            name: None,
-            // options are currently UNIX-only. see https://www.cups.org/doc/options.html
-            raw_properties: &[
-                ("document-format", "application/vnd.cups-raw"),
-                ("copies", "2"),
-            ],
-        });
-        // Err("...") or Ok(())
-    }
-}
+// Cancel
+printer.cancel_job(123)
 ```
+
+## ⏳ Future 
+
+- GhostScript option conversion support

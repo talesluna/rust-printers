@@ -26,7 +26,6 @@
 //!     if default_printer.is_some() {
 //!         let job_id = default_printer.unwrap().print("dlrow olleh".as_bytes(), PrinterJobOptions {
 //!             name: None,
-//!             // options are currently UNIX-only. see https://www.cups.org/doc/options.html
 //!             raw_properties: &[
 //!                 ("document-format", "application/vnd.cups-raw"),
 //!                 ("copies", "2"),
