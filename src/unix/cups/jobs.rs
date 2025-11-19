@@ -1,5 +1,5 @@
 use libc::{c_char, c_int, time_t};
-use std::{slice, time::SystemTime};
+use std::{os::raw::c_void, ptr, slice, time::SystemTime};
 
 use crate::{
     common::{base::options::OptionsCollection, traits::platform::PlatformPrinterJobGetters},
@@ -9,10 +9,19 @@ use crate::{
     },
 };
 
+const CUPS_IPP_OK: c_int = 0x0000;
+const CUPS_IPP_TAG_URI: c_int = 0x45;
+const CUPS_IPP_TAG_INTEGER: c_int = 0x21;
+const CUPS_IPP_TAG_OPERATION: c_int = 0x01;
+
+const CUPS_IPP_OP_HOLD_JOB: c_int = 12;
+const CUPS_IPP_OP_CANCEL_JOB: c_int = 8;
+const CUPS_IPP_OP_RELEASE_JOB: c_int = 13;
+const CUPS_IPP_OP_RESTART_JOB: c_int = 14;
+
 #[link(name = "cups")]
 unsafe extern "C" {
-
-    fn cupsPrintFile(
+    unsafe fn cupsPrintFile(
         printer_name: *const c_char,
         filename: *const c_char,
         title: *const c_char,
@@ -20,13 +29,39 @@ unsafe extern "C" {
         options: *const CupsOptionT,
     ) -> c_int;
 
-    fn cupsGetJobs(
+    unsafe fn cupsGetJobs(
         jobs: *mut *mut CupsJobsS,
         name: *const c_char,
         myjobs: c_int,
         whichjobs: c_int,
     ) -> c_int;
 
+    unsafe fn cupsDoRequest(
+        http: *mut c_void,
+        request: *mut c_void,
+        resource: *const c_char,
+    ) -> *mut c_void;
+
+    unsafe fn ippAddString(
+        req: *mut c_void,
+        group: c_int,
+        value_tag: c_int,
+        name: *const c_char,
+        lang: *const c_char,
+        value: *const c_char,
+    );
+
+    unsafe fn ippAddInteger(
+        req: *mut c_void,
+        group: c_int,
+        value_tag: c_int,
+        name: *const c_char,
+        value: c_int,
+    );
+
+    unsafe fn ippDelete(req: *mut c_void);
+    unsafe fn ippNewRequest(op: c_int) -> *mut c_void;
+    unsafe fn cupsLastError() -> c_int;
 }
 
 #[derive(Debug)]
@@ -141,5 +176,74 @@ pub fn print_file(
         } else {
             Ok(result as u64)
         }
+    }
+}
+
+/**
+ * Send cancel job request to cups
+ */
+pub fn hold_job(printer_name: &str, job_id: i32) -> bool {
+    do_request(printer_name, job_id, CUPS_IPP_OP_HOLD_JOB)
+}
+
+/**
+ * Send release job request to cups
+ */
+pub fn release_job(printer_name: &str, job_id: i32) -> bool {
+    do_request(printer_name, job_id, CUPS_IPP_OP_RELEASE_JOB)
+}
+
+/**
+ * Send restart job request to cups
+ */
+pub fn restart_job(printer_name: &str, job_id: i32) -> bool {
+    do_request(printer_name, job_id, CUPS_IPP_OP_RESTART_JOB)
+}
+
+/**
+ * Send cancel job request to cups
+ */
+pub fn cancel_job(printer_name: &str, job_id: i32) -> bool {
+    do_request(printer_name, job_id, CUPS_IPP_OP_CANCEL_JOB)
+}
+
+/**
+ * Send request op to cups
+ */
+fn do_request(printer_name: &str, job_id: i32, op: i32) -> bool {
+    unsafe {
+        let req = ippNewRequest(op);
+        if req.is_null() {
+            return false;
+        }
+
+        let uri_param = &str_to_cstring("printer-uri");
+        let printer_uri =
+            str_to_cstring(format!("ipp://localhost/printers/{printer_name}").as_str());
+
+        ippAddString(
+            req,
+            CUPS_IPP_TAG_OPERATION,
+            CUPS_IPP_TAG_URI,
+            uri_param.as_ptr(),
+            ptr::null(),
+            printer_uri.as_ptr(),
+        );
+
+        let job_id_param = &str_to_cstring("job-id");
+        ippAddInteger(
+            req,
+            CUPS_IPP_TAG_OPERATION,
+            CUPS_IPP_TAG_INTEGER,
+            job_id_param.as_ptr(),
+            job_id,
+        );
+
+        let resource = &str_to_cstring("/");
+        let response = cupsDoRequest(ptr::null_mut(), req, resource.as_ptr());
+        let status = cupsLastError();
+        ippDelete(response);
+
+        status == CUPS_IPP_OK
     }
 }

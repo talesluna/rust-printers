@@ -30,8 +30,7 @@ impl PlatformActions for crate::Platform {
         options: PrinterJobOptions,
     ) -> Result<u64, &'static str> {
         let path = utils::file::save_tmp_file(buffer);
-        if path.is_some() {
-            let file_path = path.unwrap();
+        if let Some(file_path) = path {
             Self::print_file(printer_system_name, file_path.to_str().unwrap(), options)
         } else {
             Err("Failed to create temp file")
@@ -102,6 +101,26 @@ impl PlatformActions for crate::Platform {
             7 | 8 => PrinterJobState::CANCELLED,
             9 => PrinterJobState::COMPLETED,
             _ => PrinterJobState::UNKNOWN,
+        }
+    }
+
+    fn set_job_state(
+        printer_name: &str,
+        job_id: u64,
+        state: PrinterJobState,
+    ) -> Result<(), &'static str> {
+        let result = match state {
+            PrinterJobState::PENDING => cups::jobs::restart_job(printer_name, job_id as i32),
+            PrinterJobState::PROCESSING => cups::jobs::release_job(printer_name, job_id as i32),
+            PrinterJobState::PAUSED => cups::jobs::hold_job(printer_name, job_id as i32),
+            PrinterJobState::CANCELLED => cups::jobs::cancel_job(printer_name, job_id as i32),
+            _ => false,
+        };
+
+        if result {
+            Ok(())
+        } else {
+            Err("cups method failed")
         }
     }
 }

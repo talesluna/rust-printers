@@ -25,7 +25,12 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         options: PrinterJobOptions,
     ) -> Result<u64, &'static str> {
-        winspool::jobs::print_buffer(printer_system_name, options.name, buffer)
+        winspool::jobs::print_buffer(
+            printer_system_name,
+            options.name,
+            buffer,
+            options.raw_properties,
+        )
     }
 
     fn print_file(
@@ -96,5 +101,19 @@ impl PlatformActions for crate::Platform {
             128 | 496 => PrinterJobState::COMPLETED,
             _ => PrinterJobState::UNKNOWN,
         }
+    }
+
+    fn set_job_state(
+        printer_name: &str,
+        job_id: u64,
+        state: PrinterJobState,
+    ) -> Result<(), &'static str> {
+        return match state {
+            PrinterJobState::PAUSED => winspool::jobs::set_job_state(printer_name, 1, job_id),
+            PrinterJobState::PENDING => winspool::jobs::set_job_state(printer_name, 4, job_id),
+            PrinterJobState::CANCELLED => winspool::jobs::set_job_state(printer_name, 5, job_id),
+            PrinterJobState::PROCESSING => winspool::jobs::set_job_state(printer_name, 2, job_id),
+            _ => Err("Operation canot be defined"),
+        };
     }
 }

@@ -2,7 +2,7 @@
 #![allow(non_camel_case_types)]
 
 use libc::{c_int, c_ulong, c_ushort, c_void, wchar_t};
-use std::{ptr, slice};
+use std::{ffi::c_char, ptr, slice};
 
 use crate::{
     common::traits::platform::PlatformPrinterJobGetters,
@@ -44,6 +44,13 @@ unsafe extern "system" {
         cbBuf: c_ulong,
         pcbNeeded: *mut c_ulong,
         pcReturned: *mut c_ulong,
+    ) -> c_int;
+    fn SetJobW(
+        hPrinter: *mut c_void,
+        JobId: c_ulong,
+        Level: c_ulong,
+        pJob: *mut c_char,
+        Command: c_ulong,
     ) -> c_int;
 }
 
@@ -143,29 +150,55 @@ impl PlatformPrinterJobGetters for JOB_INFO_1W {
 }
 
 /**
- * Print a buffer as RAW datatype with winspool WritePrinter
+ * Open printer utility
  */
-pub fn print_buffer(
-    printer_system_name: &str,
-    job_name: Option<&str>,
-    buffer: &[u8],
-) -> Result<u64, &'static str> {
-    unsafe {
-        let printer_name = str_to_wide_string(printer_system_name);
-        let mut printer_handle: *mut c_void = ptr::null_mut();
+fn open_printer(printer_name: &str) -> Result<*mut c_void, &'static str> {
+    let printer_name = str_to_wide_string(printer_name);
+    let mut printer_handle: *mut c_void = ptr::null_mut();
 
-        if OpenPrinterW(
+    return if unsafe {
+        OpenPrinterW(
             printer_name.as_ptr() as *const wchar_t,
             &mut printer_handle,
             ptr::null_mut(),
-        ) == 0
-        {
-            return Err("OpenPrinterW failed");
+        )
+    } == 0
+    {
+        Err("OpenPrinterW failed")
+    } else {
+        Ok(printer_handle)
+    };
+}
+
+/**
+ * Print a buffer as RAW datatype with winspool WritePrinterx
+ */
+pub fn print_buffer(
+    printer_name: &str,
+    job_name: Option<&str>,
+    buffer: &[u8],
+    options: &[(&str, &str)],
+) -> Result<u64, &'static str> {
+    unsafe {
+        let printer_handle = open_printer(printer_name);
+        if let Err(err) = printer_handle {
+            return Err(err);
         }
 
+        let mut copies = 1;
+        let mut data_type = "RAW";
+
+        for option in options {
+            match option.0 {
+                "copies" => copies = option.1.parse().unwrap_or(copies),
+                "document-format" => data_type = option.1,
+                _ => {}
+            }
+        }
+
+        let mut pDatatype = str_to_wide_string(data_type);
         let mut pDocName =
             str_to_wide_string(job_name.unwrap_or(get_current_epoch().to_string().as_str()));
-        let mut pDatatype = str_to_wide_string("RAW");
 
         let doc_info = DocInfo1 {
             pDocName: pDocName.as_mut_ptr() as *mut wchar_t,
@@ -173,33 +206,27 @@ pub fn print_buffer(
             pOutputFile: ptr::null_mut(),
         };
 
-        let job_id = StartDocPrinterW(printer_handle, 1, &doc_info);
+        let job_id = StartDocPrinterW(printer_handle.unwrap(), 1, &doc_info);
         if job_id == 0 {
-            ClosePrinter(printer_handle);
+            ClosePrinter(printer_handle.unwrap());
             return Err("StartDocPrinterW failed");
         }
 
-        if StartPagePrinter(printer_handle) == 0 {
-            EndDocPrinter(printer_handle);
-            ClosePrinter(printer_handle);
-            return Err("StartPagePrinter failed");
+        for _ in 0..copies {
+            if StartPagePrinter(printer_handle.unwrap()) != 0 {
+                let mut bytes_written: c_ulong = 0;
+                WritePrinter(
+                    printer_handle.unwrap(),
+                    buffer.as_ptr() as *mut c_void,
+                    buffer.len() as c_ulong,
+                    &mut bytes_written,
+                );
+                EndPagePrinter(printer_handle.unwrap());
+            }
         }
 
-        let mut bytes_written: c_ulong = 0;
-        let write_result = WritePrinter(
-            printer_handle,
-            buffer.as_ptr() as *mut c_void,
-            buffer.len() as c_ulong,
-            &mut bytes_written,
-        );
-
-        EndPagePrinter(printer_handle);
-        EndDocPrinter(printer_handle);
-        ClosePrinter(printer_handle);
-
-        if write_result == 0 {
-            return Err("WritePrinter failed");
-        }
+        EndDocPrinter(printer_handle.unwrap());
+        ClosePrinter(printer_handle.unwrap());
 
         Ok(job_id as u64)
     }
@@ -208,21 +235,10 @@ pub fn print_buffer(
 /**
  * Retrieve print jobs of a specific printer with EnumJobsW
  */
-pub fn enum_printer_jobs(
-    printer_system_name: &str,
-) -> Result<&'static [JOB_INFO_1W], &'static str> {
-    let printer_name = str_to_wide_string(printer_system_name);
-    let mut printer_handle: *mut c_void = ptr::null_mut();
-
-    if unsafe {
-        OpenPrinterW(
-            printer_name.as_ptr() as *const wchar_t,
-            &mut printer_handle,
-            ptr::null_mut(),
-        )
-    } == 0
-    {
-        return Err("OpenPrinterW failed");
+pub fn enum_printer_jobs(printer_name: &str) -> Result<&'static [JOB_INFO_1W], &'static str> {
+    let printer_handle = open_printer(printer_name);
+    if let Err(err) = printer_handle {
+        return Err(err);
     }
 
     let mut enum_result = 0;
@@ -233,7 +249,7 @@ pub fn enum_printer_jobs(
     for _ in 0..2 {
         enum_result = unsafe {
             EnumJobsW(
-                printer_handle,
+                printer_handle.unwrap(),
                 0,
                 0xFFFFFFFF,
                 1,
@@ -251,7 +267,7 @@ pub fn enum_printer_jobs(
         buffer_ptr = alloc_s::<JOB_INFO_1W>(bytes_needed);
     }
 
-    unsafe { ClosePrinter(printer_handle) };
+    unsafe { ClosePrinter(printer_handle.unwrap()) };
 
     if enum_result == 0 {
         return Err("EnumJobsW failed");
@@ -262,4 +278,32 @@ pub fn enum_printer_jobs(
     } else {
         &[]
     })
+}
+
+/**
+ * Change job state
+ */
+pub fn set_job_state(printer_name: &str, command: u64, job_id: u64) -> Result<(), &'static str> {
+    unsafe {
+        let printer_handle = open_printer(printer_name);
+        if let Err(err) = printer_handle {
+            return Err(err);
+        }
+
+        let result = SetJobW(
+            printer_handle.unwrap(),
+            job_id as c_ulong,
+            0,
+            ptr::null_mut(),
+            command as c_ulong,
+        );
+
+        ClosePrinter(printer_handle.unwrap());
+
+        if result == 0 {
+            Err("SetJobW failed")
+        } else {
+            Ok(())
+        }
+    }
 }
