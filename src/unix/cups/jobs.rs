@@ -214,12 +214,12 @@ fn do_request(printer_name: &str, job_id: i32, op: i32) -> bool {
     unsafe {
         let req = ippNewRequest(op);
         if req.is_null() {
-            false;
+            return false;
         }
 
         let uri_param = &str_to_cstring("printer-uri");
         let printer_uri =
-            str_to_cstring(format!("ipp://localhost/printers/{}", printer_name).as_str());
+            str_to_cstring(format!("ipp://localhost/printers/{printer_name}").as_str());
 
         ippAddString(
             req,

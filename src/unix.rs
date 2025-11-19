@@ -118,10 +118,10 @@ impl PlatformActions for crate::Platform {
             _ => false,
         };
 
-        return if result {
+        if result {
             Ok(())
         } else {
             Err("cups method failed")
-        };
+        }
     }
 }
