@@ -30,8 +30,7 @@ impl PlatformActions for crate::Platform {
         options: PrinterJobOptions,
     ) -> Result<u64, &'static str> {
         let path = utils::file::save_tmp_file(buffer);
-        if path.is_some() {
-            let file_path = path.unwrap();
+        if let Some(file_path) = path {
             Self::print_file(printer_system_name, file_path.to_str().unwrap(), options)
         } else {
             Err("Failed to create temp file")

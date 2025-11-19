@@ -45,11 +45,10 @@ impl CupsDestT {
         let key = CString::new(key);
         let mut value = "".to_string();
 
-        if !self.options.is_null() && key.is_ok() {
-            let option_key = key.unwrap();
+        if !self.options.is_null() && let Ok(key) = key {
             unsafe {
                 let option_value =
-                    cupsGetOption(option_key.as_ptr(), self.num_options, self.options);
+                    cupsGetOption(key.as_ptr(), self.num_options, self.options);
                 if !option_value.is_null() {
                     value = c_char_to_string(option_value);
                 }
