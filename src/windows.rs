@@ -24,7 +24,11 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         buffer: &[u8],
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str> {
+    ) -> Result<u64, String> {
+
+        let buffer = options.converter.vec_to_vec(buffer)?;
+        let buffer = &buffer.as_slice();
+
         winspool::jobs::print_buffer(
             printer_system_name,
             options.name,
@@ -37,12 +41,12 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         file_path: &str,
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str> {
+    ) -> Result<u64, String> {
         let buffer = utils::file::get_file_as_bytes(file_path);
         if buffer.is_some() {
             Self::print(printer_system_name, &buffer.unwrap(), options)
         } else {
-            Err("failed to read file")
+            Err("failed to read file".into())
         }
     }
 
@@ -107,13 +111,13 @@ impl PlatformActions for crate::Platform {
         printer_name: &str,
         job_id: u64,
         state: PrinterJobState,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), String> {
         return match state {
             PrinterJobState::PAUSED => winspool::jobs::set_job_state(printer_name, 1, job_id),
             PrinterJobState::PENDING => winspool::jobs::set_job_state(printer_name, 4, job_id),
             PrinterJobState::CANCELLED => winspool::jobs::set_job_state(printer_name, 5, job_id),
             PrinterJobState::PROCESSING => winspool::jobs::set_job_state(printer_name, 2, job_id),
-            _ => Err("Operation canot be defined"),
+            _ => Err("Operation canot be defined".into()),
         };
     }
 }

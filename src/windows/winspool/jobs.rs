@@ -178,11 +178,11 @@ pub fn print_buffer(
     job_name: Option<&str>,
     buffer: &[u8],
     options: &[(&str, &str)],
-) -> Result<u64, &'static str> {
+) -> Result<u64, String> {
     unsafe {
         let printer_handle = open_printer(printer_name);
         if let Err(err) = printer_handle {
-            return Err(err);
+            return Err(err.to_string());
         }
 
         let mut copies = 1;
@@ -209,7 +209,7 @@ pub fn print_buffer(
         let job_id = StartDocPrinterW(printer_handle.unwrap(), 1, &doc_info);
         if job_id == 0 {
             ClosePrinter(printer_handle.unwrap());
-            return Err("StartDocPrinterW failed");
+            return Err("StartDocPrinterW failed".into());
         }
 
         for _ in 0..copies {
@@ -283,11 +283,11 @@ pub fn enum_printer_jobs(printer_name: &str) -> Result<&'static [JOB_INFO_1W], &
 /**
  * Change job state
  */
-pub fn set_job_state(printer_name: &str, command: u64, job_id: u64) -> Result<(), &'static str> {
+pub fn set_job_state(printer_name: &str, command: u64, job_id: u64) -> Result<(), String> {
     unsafe {
         let printer_handle = open_printer(printer_name);
         if let Err(err) = printer_handle {
-            return Err(err);
+            return Err(err.to_string());
         }
 
         let result = SetJobW(
@@ -301,7 +301,7 @@ pub fn set_job_state(printer_name: &str, command: u64, job_id: u64) -> Result<()
         ClosePrinter(printer_handle.unwrap());
 
         if result == 0 {
-            Err("SetJobW failed")
+            Err("SetJobW failed".into())
         } else {
             Ok(())
         }

@@ -174,7 +174,7 @@ impl Printer {
     /**
      * Print bytes
      */
-    pub fn print(&self, buffer: &[u8], options: PrinterJobOptions) -> Result<u64, &'static str> {
+    pub fn print(&self, buffer: &[u8], options: PrinterJobOptions) -> Result<u64, String> {
         crate::Platform::print(self.system_name.as_str(), buffer, options)
     }
 
@@ -185,7 +185,7 @@ impl Printer {
         &self,
         file_path: &str,
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str> {
+    ) -> Result<u64, String> {
         crate::Platform::print_file(self.system_name.as_str(), file_path, options)
     }
 
@@ -206,28 +206,28 @@ impl Printer {
     /**
      * Pause an printer job
      */
-    pub fn pause_job(&self, job_id: u64) -> Result<(), &'static str> {
+    pub fn pause_job(&self, job_id: u64) -> Result<(), String> {
         crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::PAUSED)
     }
 
     /**
      * Resume an paused printer job
      */
-    pub fn resume_job(&self, job_id: u64) -> Result<(), &'static str> {
+    pub fn resume_job(&self, job_id: u64) -> Result<(), String> {
         crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::PROCESSING)
     }
 
     /**
      * restart an printer job
      */
-    pub fn restart_job(&self, job_id: u64) -> Result<(), &'static str> {
+    pub fn restart_job(&self, job_id: u64) -> Result<(), String> {
         crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::PENDING)
     }
 
     /**
      * Cancel an printer job
      */
-    pub fn cancel_job(&self, job_id: u64) -> Result<(), &'static str> {
+    pub fn cancel_job(&self, job_id: u64) -> Result<(), String> {
         crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::CANCELLED)
     }
 }

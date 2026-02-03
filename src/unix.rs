@@ -5,8 +5,7 @@ use crate::common::{
     base::{
         job::{PrinterJob, PrinterJobOptions, PrinterJobState},
         printer::{Printer, PrinterState},
-    },
-    traits::platform::{PlatformActions, PlatformPrinterGetters},
+    }, traits::platform::{PlatformActions, PlatformPrinterGetters}
 };
 
 mod cups;
@@ -28,12 +27,21 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         buffer: &[u8],
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str> {
+    ) -> Result<u64, String> {
+
+        let buffer = options.converter.vec_to_vec(buffer)?;
+        let buffer = &buffer.as_slice();
+
         let path = utils::file::save_tmp_file(buffer);
         if let Some(file_path) = path {
-            Self::print_file(printer_system_name, file_path.to_str().unwrap(), options)
+            cups::jobs::print_file(
+                printer_system_name,
+                file_path.to_str().unwrap(),
+                options.name,
+                options.raw_properties,
+            )
         } else {
-            Err("Failed to create temp file")
+            Err("Failed to create temp file".into())
         }
     }
 
@@ -41,10 +49,11 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         file_path: &str,
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str> {
+    ) -> Result<u64, String> {
+        let file_path = options.converter.file_to_file(file_path)?;
         cups::jobs::print_file(
             printer_system_name,
-            file_path,
+            file_path.as_str(),
             options.name,
             options.raw_properties,
         )
@@ -108,7 +117,7 @@ impl PlatformActions for crate::Platform {
         printer_name: &str,
         job_id: u64,
         state: PrinterJobState,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), String> {
         let result = match state {
             PrinterJobState::PENDING => cups::jobs::restart_job(printer_name, job_id as i32),
             PrinterJobState::PROCESSING => cups::jobs::release_job(printer_name, job_id as i32),
@@ -120,7 +129,7 @@ impl PlatformActions for crate::Platform {
         if result {
             Ok(())
         } else {
-            Err("cups method failed")
+            Err("cups method failed".into())
         }
     }
 }
