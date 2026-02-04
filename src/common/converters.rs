@@ -1,6 +1,5 @@
 mod ghostscript;
 
-
 pub enum GhostscriptConverterDevice {
     Ps2write,
     Png16m,
@@ -13,15 +12,29 @@ pub enum GhostscriptConverterDevice {
 pub struct GhostscriptConverterOptions {
     pub command: Option<&'static str>,
     pub dpi: Option<u32>,
-    pub device: Option<&'static str>
+    pub device: Option<&'static str>,
 }
 
 impl GhostscriptConverterOptions {
-    pub fn from_device(device: &'static str) -> Self { Self { command: None, dpi: None, device: Some(device) }}
-    pub fn ps2write() -> Self { Self::from_device("ps2write") }
-    pub fn png16m() -> Self { Self::from_device("png16m") }
-    pub fn tiffg4() -> Self { Self::from_device("tiffg4") }
-    pub fn pngmono() -> Self { Self::from_device("pngmono") }
+    pub fn ps2write() -> Self {
+        Self::from_device("ps2write")
+    }
+    pub fn png16m() -> Self {
+        Self::from_device("png16m")
+    }
+    pub fn tiffg4() -> Self {
+        Self::from_device("tiffg4")
+    }
+    pub fn pngmono() -> Self {
+        Self::from_device("pngmono")
+    }
+    pub fn from_device(device: &'static str) -> Self {
+        Self {
+            dpi: None,
+            device: Some(device),
+            command: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -33,26 +46,15 @@ pub enum Converter {
 impl Converter {
     pub fn vec_to_vec(&self, buffer: &[u8]) -> Result<Vec<u8>, String> {
         match self {
-            Converter::Ghostscript(options) => {
-                ghostscript::vec_to_vec(buffer, options)
-            }
-
-            Converter::None => {
-                Ok(buffer.to_vec())
-            }
+            Converter::Ghostscript(options) => ghostscript::vec_to_vec(buffer, options),
+            Converter::None => Ok(buffer.to_vec()),
         }
     }
 
     pub fn file_to_file(&self, path: &str) -> Result<String, String> {
         match self {
-            Converter::Ghostscript(options) => {
-                ghostscript::file_to_file(path, options)
-            }
-
-            Converter::None => {
-                Ok(path.to_string())
-            }
+            Converter::Ghostscript(options) => ghostscript::file_to_file(path, options),
+            Converter::None => Ok(path.to_string()),
         }
     }
-
 }

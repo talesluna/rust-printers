@@ -25,7 +25,6 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         options: PrinterJobOptions,
     ) -> Result<u64, String> {
-
         let buffer = options.converter.vec_to_vec(buffer)?;
         let buffer = &buffer.as_slice();
 

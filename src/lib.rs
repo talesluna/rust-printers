@@ -5,7 +5,8 @@
 //! Printers can provide a list of printers available on the system and send print jobs to them
 //!
 //! ```rust,ignore
-//! use printers::{get_printer_by_name, get_default_printer, get_printers};
+//! use printers::common::converters::{Converter, GhostscriptConverterOptions};
+//! use printers::{get_printer_by_name, get_default_printer, get_printers, converters::{Converter, GhostscriptConverterOptions}};
 //!
 //! fn main() {
 //!
@@ -30,6 +31,7 @@
 //!                 ("document-format", "application/vnd.cups-raw"),
 //!                 ("copies", "2"),
 //!             ],
+//!             converter: Converter::Ghostscript(GhostscriptConverterOptions::ps2write()),
 //!         });
 //!         // Err("...") or Ok(())
 //!     }

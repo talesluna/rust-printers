@@ -181,11 +181,7 @@ impl Printer {
     /**
      * Print file
      */
-    pub fn print_file(
-        &self,
-        file_path: &str,
-        options: PrinterJobOptions,
-    ) -> Result<u64, String> {
+    pub fn print_file(&self, file_path: &str, options: PrinterJobOptions) -> Result<u64, String> {
         crate::Platform::print_file(self.system_name.as_str(), file_path, options)
     }
 

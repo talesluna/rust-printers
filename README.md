@@ -38,12 +38,13 @@ let job_id = printer.print("42".as_bytes(), PrinterJobOptions::none());
 **Create print job of an file**
 
 ```rust
-let job_id = printer.print_file("my_file/example/path.txt", PrinterJobOptions {
+let job_id = printer.print_file("my_file/example/path.pdf", PrinterJobOptions {
     name: Some("My print job"),
     raw_properties: &[
         ("copies", "2"),
-        ("document-format", "XPS"),
+        ("document-format", "RAW"),
     ],
+    converter: Converter::Ghostscript(GhostscriptConverterOptions::ps2write()),
 });
 // Result<u64, &'static str>
 ```
@@ -80,4 +81,5 @@ printer.cancel_job(123)
 
 ## ⏳ Future 
 
-- GhostScript option conversion support
+- DOCX conversion
+- Conversion pipeline

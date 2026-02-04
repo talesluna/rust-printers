@@ -3,7 +3,10 @@ use std::{
     time::SystemTime,
 };
 
-use crate::common::{converters::Converter, traits::platform::{PlatformActions, PlatformPrinterJobGetters}};
+use crate::common::{
+    converters::Converter,
+    traits::platform::{PlatformActions, PlatformPrinterJobGetters},
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum PrinterJobState {
@@ -103,7 +106,7 @@ impl PrinterJobState {
 pub struct PrinterJobOptions<'a> {
     pub name: Option<&'a str>,
     pub raw_properties: &'a [(&'a str, &'a str)],
-    pub converter: Converter
+    pub converter: Converter,
 }
 
 impl PrinterJobOptions<'_> {
