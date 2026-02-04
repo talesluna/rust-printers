@@ -6,7 +6,9 @@ use crate::common::{
         job::{PrinterJob, PrinterJobOptions, PrinterJobState},
         printer::{Printer, PrinterState},
     },
+    converters::Converter,
     traits::platform::{PlatformActions, PlatformPrinterGetters},
+    utils::file,
 };
 
 mod cups;
@@ -29,20 +31,16 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         options: PrinterJobOptions,
     ) -> Result<u64, String> {
-        let buffer = options.converter.vec_to_vec(buffer)?;
+        let buffer = options.converter.convert(buffer)?;
         let buffer = &buffer.as_slice();
+        let file_path = file::save_tmp_file(buffer)?;
 
-        let path = utils::file::save_tmp_file(buffer);
-        if let Some(file_path) = path {
-            cups::jobs::print_file(
-                printer_system_name,
-                file_path.to_str().unwrap(),
-                options.name,
-                options.raw_properties,
-            )
-        } else {
-            Err("Failed to create temp file".into())
-        }
+        cups::jobs::print_file(
+            printer_system_name,
+            file_path.to_str().unwrap(),
+            options.name,
+            options.raw_properties,
+        )
     }
 
     fn print_file(
@@ -50,10 +48,14 @@ impl PlatformActions for crate::Platform {
         file_path: &str,
         options: PrinterJobOptions,
     ) -> Result<u64, String> {
-        let file_path = options.converter.file_to_file(file_path)?;
+        if options.converter != Converter::None {
+            let buffer = file::get_file_as_bytes(file_path).unwrap_or_default();
+            return Self::print(printer_system_name, buffer.as_slice(), options);
+        }
+
         cups::jobs::print_file(
             printer_system_name,
-            file_path.as_str(),
+            file_path,
             options.name,
             options.raw_properties,
         )

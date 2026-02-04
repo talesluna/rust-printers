@@ -3,35 +3,16 @@ use std::process::{Command, Stdio};
 
 use crate::common::converters::GhostscriptConverterOptions;
 
-pub fn file_to_file(path: &str, options: &GhostscriptConverterOptions) -> Result<String, String> {
-
-    // TODO: save a tmp file here
-    let converted_path = format!("{path}.converted");
-    run(options, converted_path.as_str(), path, None, None, None)?;
-
-    Ok(converted_path)
-}
-
-pub fn vec_to_vec(buffer: &[u8], options: &GhostscriptConverterOptions) -> Result<Vec<u8>, String> {
-    let output = run(
-        options,
-        "%stdout",
-        "-",
-        Some(buffer.to_vec()),
-        Some(Stdio::piped()),
-        Some(Stdio::piped()),
-    )?;
+pub fn convert(buffer: &[u8], options: &GhostscriptConverterOptions) -> Result<Vec<u8>, String> {
+    let output = run(options, "-", Some(buffer.to_vec()))?;
 
     Ok(output)
 }
 
 fn run(
     options: &GhostscriptConverterOptions,
-    output: &str,
     input: &str,
     stdin: Option<Vec<u8>>,
-    stdout: Option<Stdio>,
-    stderr: Option<Stdio>,
 ) -> Result<Vec<u8>, String> {
     let mut command = Command::new(options.command.unwrap_or(
         #[cfg(target_family = "unix")]
@@ -47,17 +28,12 @@ fn run(
         "-dNOPAUSE",
         format!("-sDEVICE={}", options.device.unwrap_or("png16m")).as_str(),
         format!("-r{}", options.dpi.unwrap_or(500)).as_str(),
-        format!("-sOutputFile={output}").as_str(),
+        "-sOutputFile=%stdout",
         input,
     ]);
 
-    if let Some(stdout) = stdout {
-        command.stdout(stdout);
-    }
-
-    if let Some(stderr) = stderr {
-        command.stderr(stderr);
-    }
+    command.stdout(Stdio::piped());
+    command.stderr(Stdio::piped());
 
     let output = if let Some(buffer) = stdin {
         command.stdin(Stdio::piped());

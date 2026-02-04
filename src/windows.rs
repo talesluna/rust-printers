@@ -1,7 +1,12 @@
-use crate::common::base::job::{PrinterJobOptions, PrinterJobState};
-use crate::common::base::printer::PrinterState;
-use crate::common::base::{job::PrinterJob, printer::Printer};
-use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
+use crate::common::{
+    base::{
+        job::{PrinterJob, PrinterJobOptions, PrinterJobState},
+        printer::Printer,
+        printer::PrinterState,
+    },
+    traits::platform::{PlatformActions, PlatformPrinterGetters},
+    utils::file,
+};
 
 mod utils;
 mod winspool;
@@ -25,7 +30,7 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         options: PrinterJobOptions,
     ) -> Result<u64, String> {
-        let buffer = options.converter.vec_to_vec(buffer)?;
+        let buffer = options.converter.convert(buffer)?;
         let buffer = &buffer.as_slice();
 
         winspool::jobs::print_buffer(
@@ -41,12 +46,8 @@ impl PlatformActions for crate::Platform {
         file_path: &str,
         options: PrinterJobOptions,
     ) -> Result<u64, String> {
-        let buffer = utils::file::get_file_as_bytes(file_path);
-        if buffer.is_some() {
-            Self::print(printer_system_name, &buffer.unwrap(), options)
-        } else {
-            Err("failed to read file".into())
-        }
+        let buffer = file::get_file_as_bytes(file_path)?;
+        Self::print(printer_system_name, &buffer, options)
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {

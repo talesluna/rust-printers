@@ -44,17 +44,10 @@ pub enum Converter {
 }
 
 impl Converter {
-    pub fn vec_to_vec(&self, buffer: &[u8]) -> Result<Vec<u8>, String> {
+    pub fn convert(&self, buffer: &[u8]) -> Result<Vec<u8>, String> {
         match self {
-            Converter::Ghostscript(options) => ghostscript::vec_to_vec(buffer, options),
+            Converter::Ghostscript(options) => ghostscript::convert(buffer, options),
             Converter::None => Ok(buffer.to_vec()),
-        }
-    }
-
-    pub fn file_to_file(&self, path: &str) -> Result<String, String> {
-        match self {
-            Converter::Ghostscript(options) => ghostscript::file_to_file(path, options),
-            Converter::None => Ok(path.to_string()),
         }
     }
 }
