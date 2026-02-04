@@ -12,12 +12,18 @@ See the references in [docs.rs](https://docs.rs/printers).
 
 ## 🛠️ Features
 
-|  Target |    API   | List printers | List jobs | Print bytes and text files | Print PDF,images, etc... |
-|:-------:|:--------:|:-------------:|:---------:|:-----------------------:|:------------------------:|
-| Unix    | cups     |       ✅       |     ✅     |            ✅            |             ✅          |
-| Windows | winspool |       ✅       |     ✅     |            ✅            |             🤔**        |
+| Feature | Status |
+| :--- | :---: |
+| List available printers | ✅ |
+| List printer jobs | ✅ |
+| Manage printer jobs (pause, resume, cancel, restart) | ✅ |
+| Print plain text | ✅ |
+| Print PDF, images etc... (*1)| ✅ |
+| Converters (Ghostscript) | ✅ |
+| DOCx / XLS / PPTx converter | ⏳ |
+| Converter pipeline (doc -> pdf -> ps) | ⏳ |
 
-> ** On Windows this lib use RAW datatype to process printing by default. Expected output depends of printer firmware.
+> *1 If necessary, you can raster the file using converters supported by the lib, such as Ghostscript. See the examples below.
 
 ## 👇 Examples
 
@@ -32,7 +38,7 @@ let printers = get_printers();
 
 ```rust
 let job_id = printer.print("42".as_bytes(), PrinterJobOptions::none());
-// Result<u64, &'static str>
+// Result<u64, String>
 ```
 
 **Create print job of an file**
@@ -46,7 +52,7 @@ let job_id = printer.print_file("my_file/example/path.pdf", PrinterJobOptions {
     ],
     converter: Converter::Ghostscript(GhostscriptConverterOptions::ps2write()),
 });
-// Result<u64, &'static str>
+// Result<u64, String>
 ```
 
 **Get a printer by name**
@@ -78,8 +84,3 @@ printer.restart_job(123);
 // Cancel
 printer.cancel_job(123)
 ```
-
-## ⏳ Future 
-
-- DOCX conversion
-- Conversion pipeline
