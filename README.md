@@ -38,7 +38,7 @@ let printers = get_printers();
 
 ```rust
 let job_id = printer.print("42".as_bytes(), PrinterJobOptions::none());
-// Result<u64, String>
+// Result<u64, PrintersError>
 ```
 
 **Create print job of an file**
@@ -52,7 +52,7 @@ let job_id = printer.print_file("my_file/example/path.pdf", PrinterJobOptions {
     ],
     converter: Converter::Ghostscript(GhostscriptConverterOptions::ps2write()),
 });
-// Result<u64, String>
+// Result<u64, PrintersError>
 ```
 
 **Get a printer by name**

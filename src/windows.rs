@@ -1,8 +1,8 @@
 use crate::common::{
     base::{
+        errors::PrintersError,
         job::{PrinterJob, PrinterJobOptions, PrinterJobState},
-        printer::Printer,
-        printer::PrinterState,
+        printer::{Printer, PrinterState},
     },
     traits::platform::{PlatformActions, PlatformPrinterGetters},
     utils::file,
@@ -29,7 +29,7 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         buffer: &[u8],
         options: PrinterJobOptions,
-    ) -> Result<u64, String> {
+    ) -> Result<u64, PrintersError> {
         let buffer = options.converter.convert(buffer)?;
         let buffer = &buffer.as_slice();
 
@@ -45,7 +45,7 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         file_path: &str,
         options: PrinterJobOptions,
-    ) -> Result<u64, String> {
+    ) -> Result<u64, PrintersError> {
         let buffer = file::get_file_as_bytes(file_path)?;
         Self::print(printer_system_name, &buffer, options)
     }
@@ -53,7 +53,7 @@ impl PlatformActions for crate::Platform {
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
         winspool::jobs::enum_printer_jobs(printer_name)
             .unwrap_or_default()
-            .into_iter()
+            .iter()
             .map(|j| PrinterJob::from_platform_printer_job_getters(j))
             .filter(|j| {
                 if active_only {
@@ -111,13 +111,13 @@ impl PlatformActions for crate::Platform {
         printer_name: &str,
         job_id: u64,
         state: PrinterJobState,
-    ) -> Result<(), String> {
+    ) -> Result<(), PrintersError> {
         return match state {
             PrinterJobState::PAUSED => winspool::jobs::set_job_state(printer_name, 1, job_id),
             PrinterJobState::PENDING => winspool::jobs::set_job_state(printer_name, 4, job_id),
             PrinterJobState::CANCELLED => winspool::jobs::set_job_state(printer_name, 5, job_id),
             PrinterJobState::PROCESSING => winspool::jobs::set_job_state(printer_name, 2, job_id),
-            _ => Err("Operation canot be defined".into()),
+            _ => Err(PrintersError::job_error("Operation canot be defined")),
         };
     }
 }

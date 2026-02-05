@@ -1,5 +1,10 @@
+use crate::common::base::errors::PrintersError;
+
 mod ghostscript;
 
+/**
+ * Known ghostscript devices or custom
+ */
 pub enum GhostscriptConverterDevice {
     Ps2write,
     Png16m,
@@ -8,10 +13,22 @@ pub enum GhostscriptConverterDevice {
     Custom(String),
 }
 
+/**
+ * Ghostscript converter options
+ */
 #[derive(Debug, Clone, PartialEq)]
 pub struct GhostscriptConverterOptions {
+    /**
+     * The path of ghostscript executable/bin 
+     */
     pub command: Option<&'static str>,
+    /**
+     * The output resolution
+     */
     pub dpi: Option<u32>,
+    /**
+     * The output type
+     */
     pub device: Option<&'static str>,
 }
 
@@ -37,6 +54,9 @@ impl GhostscriptConverterOptions {
     }
 }
 
+/**
+ * Available converters and their options
+ */
 #[derive(Debug, Clone, PartialEq)]
 pub enum Converter {
     None,
@@ -44,7 +64,11 @@ pub enum Converter {
 }
 
 impl Converter {
-    pub fn convert(&self, buffer: &[u8]) -> Result<Vec<u8>, String> {
+    /**
+     * Converts/raster the contents of a byte array according to the defined converter, into a new byte array.
+     * If "None" converter is defined, return the same byte array.
+     */
+    pub fn convert(&self, buffer: &[u8]) -> Result<Vec<u8>, PrintersError> {
         match self {
             Converter::Ghostscript(options) => ghostscript::convert(buffer, options),
             Converter::None => Ok(buffer.to_vec()),
