@@ -13,13 +13,10 @@ pub enum GhostscriptConverterDevice {
     Custom(String),
 }
 
-/**
- * Ghostscript converter options
- */
 #[derive(Debug, Clone, PartialEq)]
 pub struct GhostscriptConverterOptions {
     /**
-     * The path of ghostscript executable/bin 
+     * The path of ghostscript executable/bin
      */
     pub command: Option<&'static str>,
     /**

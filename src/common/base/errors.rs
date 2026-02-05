@@ -1,8 +1,5 @@
 use std::backtrace::Backtrace;
 
-/**
- * Known structured errors 
- */
 #[derive(Debug)]
 pub struct PrintersError {
     /**
