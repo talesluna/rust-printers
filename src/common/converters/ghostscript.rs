@@ -1,11 +1,13 @@
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-use crate::common::converters::GhostscriptConverterOptions;
+use crate::common::{base::errors::PrintersError, converters::GhostscriptConverterOptions};
 
-pub fn convert(buffer: &[u8], options: &GhostscriptConverterOptions) -> Result<Vec<u8>, String> {
+pub fn convert(
+    buffer: &[u8],
+    options: &GhostscriptConverterOptions,
+) -> Result<Vec<u8>, PrintersError> {
     let output = run(options, "-", Some(buffer.to_vec()))?;
-
     Ok(output)
 }
 
@@ -13,13 +15,14 @@ fn run(
     options: &GhostscriptConverterOptions,
     input: &str,
     stdin: Option<Vec<u8>>,
-) -> Result<Vec<u8>, String> {
-    let mut command = Command::new(options.command.unwrap_or(
+) -> Result<Vec<u8>, PrintersError> {
+    let mut command = Command::new(match options.command {
+        Some(v) => v,
         #[cfg(target_family = "unix")]
-        "gs",
+        None => "gs",
         #[cfg(target_family = "windows")]
-        "gswin64c.exe",
-    ));
+        None => "gswin64c.exe",
+    });
 
     command.args([
         "-q",
@@ -38,30 +41,27 @@ fn run(
     let output = if let Some(buffer) = stdin {
         command.stdin(Stdio::piped());
 
-        let mut child = command
-            .spawn()
-            .map_err(|error| format!("Start Ghostscript child proccess failed: {error}"))?;
+        let mut child = command.spawn().map_err(PrintersError::converter_error)?;
 
-        {
-            let stdin = child.stdin.as_mut().unwrap();
-            stdin.write_all(&buffer).unwrap();
+        if let Some(stdin) = child.stdin.as_mut() {
+            stdin
+                .write_all(&buffer)
+                .map_err(PrintersError::converter_error)?;
         }
 
         child
             .wait_with_output()
-            .map_err(|error| format!("Wait Ghostscript child proccess output failed: {error}"))
+            .map_err(PrintersError::converter_error)
     } else {
-        command
-            .output()
-            .map_err(|error| format!("Ghostscript proccess failed: {error}"))
+        command.output().map_err(PrintersError::converter_error)
     }?;
 
-    if !output.status.success() {
-        return Err(format!(
+    if output.status.success() {
+        Ok(output.stdout)
+    } else {
+        Err(PrintersError::converter_error(format!(
             "Ghostscript exit with code {}",
-            output.status.code().unwrap_or(1),
-        ));
+            output.status.code().unwrap_or(1)
+        )))
     }
-
-    Ok(output.stdout)
 }
