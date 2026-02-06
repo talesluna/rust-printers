@@ -93,8 +93,8 @@ jobs:
           $printer = Get-Printer | Where-Object {$_.Name -like "*PDF*"} | Select-Object -First 1  
           if ($printer) {  
             Rename-Printer -Name $printer.Name -NewName "SamplePrinter"
-            Set-Printer -Name "SamplePrinter" -Default  
-
+            Set-Printer -Name "SamplePrinter"
+            (New-Object -ComObject WScript.Network).SetDefaultPrinter("SamplePrinter")
             Get-Printer -Name "SamplePrinter" | Format-List Name, PrinterStatus, DriverName  
           } else {  
             Write-Error "No PDF printer found"  
@@ -104,6 +104,8 @@ jobs:
       - name: Setup test printer (MacOS)
         if: runner.os == 'macOS'
         run: |
+          sudo sed -i '' '/FileDevice/d' /private/etc/cups/cups-files.conf && echo "FileDevice Yes" | sudo tee -a /private/etc/cups/cups-files.conf
+          sudo launchctl stop org.cups.cupsd && sudo launchctl start org.cups.cupsd
           lpadmin -p SamplePrinter -E -v file:///tmp/test.pdf -P /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/PrintCore.framework/Resources/Generic.ppd  
           lpadmin -d SamplePrinter  
           lpstat -p -d
