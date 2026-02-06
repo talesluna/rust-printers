@@ -4,9 +4,12 @@
 //!
 //!```rust,no_run
 //! use printers::{
-//!     common::converters::{
-//!         Converter,
-//!         GhostscriptConverterOptions,
+//!     common::{
+//!         base::job::PrinterJobOptions,
+//!         converters::{
+//!             Converter,
+//!             GhostscriptConverterOptions,
+//!         },
 //!     },
 //!     get_printer_by_name,
 //!     get_default_printer,
