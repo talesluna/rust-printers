@@ -45,6 +45,6 @@ pub fn calculate_system_time(
 pub fn get_current_epoch() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .unwrap_or_default()
         .as_millis()
 }

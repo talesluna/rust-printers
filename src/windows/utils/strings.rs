@@ -1,4 +1,5 @@
 use libc::wchar_t;
+use std::iter;
 
 pub fn wchar_t_to_string(value: *const wchar_t) -> String {
     if value.is_null() {
@@ -17,5 +18,5 @@ pub fn wchar_t_to_string(value: *const wchar_t) -> String {
 }
 
 pub fn str_to_wide_string(value: &str) -> Vec<u16> {
-    value.encode_utf16().chain(Some(0)).collect()
+    value.encode_utf16().chain(iter::once(0)).collect()
 }

@@ -1,39 +1,47 @@
-//! Get printers and send files or bytes to print on unix and windows
+//! Get system printers and create and manage print jobs in Windows or Unix.
 //!
-//! Printers is a simple lib to call printers apis for unix *(cups)* and windows *(winspool)* systems.
+//! Printers is a simple lib to call printers apis for unix *(cups)* and windows *(winspool)* systems and can provide a list of available printers, send print jobs and manage they
 //!
-//! Printers can provide a list of printers available on the system and send print jobs to them
+//!```rust,no_run
+//! use printers::{
+//!     common::{
+//!         base::job::PrinterJobOptions,
+//!         converters::{
+//!             Converter,
+//!             GhostscriptConverterOptions,
+//!         },
+//!     },
+//!     get_printer_by_name,
+//!     get_default_printer,
+//!     get_printers
+//! };
 //!
-//! ```rust,ignore
-//! use printers::{get_printer_by_name, get_default_printer, get_printers};
-//!
-//! fn main() {
-//!
-//!     // Iterate all available printers
-//!     for printer in get_printers() {
-//!         println!("{:?}", printer);
-//!     }
-//!
-//!     // Get a printer by the name
-//!     let my_printer = get_printer_by_name("my_printer");
-//!     if my_printer.is_some() {
-//!         let job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::none());
-//!         // Err("...") or Ok(())
-//!     }
-//!
-//!     // Use the default printer
-//!     let default_printer = get_default_printer();
-//!     if default_printer.is_some() {
-//!         let job_id = default_printer.unwrap().print("dlrow olleh".as_bytes(), PrinterJobOptions {
-//!             name: None,
-//!             raw_properties: &[
-//!                 ("document-format", "application/vnd.cups-raw"),
-//!                 ("copies", "2"),
-//!             ],
-//!         });
-//!         // Err("...") or Ok(())
-//!     }
+//! // Iterate all available printers
+//! for printer in get_printers() {
+//!     println!("{:?}", printer);
 //! }
+//!
+//! // Get a printer by the name
+//! let my_printer = get_printer_by_name("my_printer");
+//! if my_printer.is_some() {
+//!     let _job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::none());
+//!     // Err("...") or Ok(())
+//! }
+//!
+//! // Use the default printer
+//! let default_printer = get_default_printer();
+//! if default_printer.is_some() {
+//!     let _job_id = default_printer.unwrap().print(b"hello world", PrinterJobOptions {
+//!         name: None,
+//!         raw_properties: &[
+//!             ("document-format", "application/vnd.cups-raw"),
+//!             ("copies", "2"),
+//!         ],
+//!         converter: Converter::Ghostscript(GhostscriptConverterOptions::ps2write()),
+//!     });
+//!     // Err("...") or Ok(())
+//! }
+//!
 //! ```
 
 struct Platform;

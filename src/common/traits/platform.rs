@@ -1,4 +1,5 @@
 use crate::common::base::{
+    errors::PrintersError,
     job::{PrinterJobOptions, PrinterJobState},
     printer::{Printer, PrinterState},
 };
@@ -37,12 +38,12 @@ pub trait PlatformActions {
         printer_system_name: &str,
         buffer: &[u8],
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str>;
+    ) -> Result<u64, PrintersError>;
     fn print_file(
         printer_system_name: &str,
         file_path: &str,
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str>;
+    ) -> Result<u64, PrintersError>;
     fn get_printer_jobs(
         printer_name: &str,
         active_only: bool,
@@ -55,5 +56,5 @@ pub trait PlatformActions {
         printer_name: &str,
         job_id: u64,
         state: PrinterJobState,
-    ) -> Result<(), &'static str>;
+    ) -> Result<(), PrintersError>;
 }

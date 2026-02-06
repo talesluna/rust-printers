@@ -2,7 +2,10 @@ use libc::{c_char, c_int, time_t};
 use std::{os::raw::c_void, ptr, slice, time::SystemTime};
 
 use crate::{
-    common::{base::options::OptionsCollection, traits::platform::PlatformPrinterJobGetters},
+    common::{
+        base::{errors::PrintersError, options::OptionsCollection},
+        traits::platform::PlatformPrinterJobGetters,
+    },
     unix::utils::{
         date::time_t_to_system_time,
         strings::{c_char_to_string, str_to_cstring},
@@ -109,7 +112,7 @@ impl PlatformPrinterJobGetters for CupsJobsS {
     }
 
     fn get_created_at(&self) -> SystemTime {
-        time_t_to_system_time(self.creation_time).unwrap()
+        time_t_to_system_time(self.creation_time).unwrap_or(SystemTime::UNIX_EPOCH)
     }
 
     fn get_processed_at(&self) -> Option<SystemTime> {
@@ -147,7 +150,7 @@ pub fn print_file(
     file_path: &str,
     job_name: Option<&str>,
     raw_options: &[(&str, &str)],
-) -> Result<u64, &'static str> {
+) -> Result<u64, PrintersError> {
     unsafe {
         let printer = &str_to_cstring(printer_name);
         let filename = str_to_cstring(file_path);
@@ -172,7 +175,7 @@ pub fn print_file(
         );
 
         if result == 0 {
-            Err("cupsPrintFile failed")
+            Err(PrintersError::print_error("cupsPrintFile"))
         } else {
             Ok(result as u64)
         }
