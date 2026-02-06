@@ -82,7 +82,7 @@ jobs:
       - name: Setup test printer (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update && sudo apt-get install -y libcups2-dev cups cups-pdf
+          sudo apt-get update && sudo apt-get install -y libcups2-dev cups cups-pdf ghostscript
           sudo systemctl start cups
           sudo lpadmin -p SamplePrinter -E -v cups-pdf:/ -P /usr/share/ppd/cups-pdf/CUPS-PDF_opt.ppd
           sudo lpadmin -d SamplePrinter
@@ -105,6 +105,7 @@ jobs:
       - name: Setup test printer (MacOS)
         if: runner.os == 'macOS'
         run: |
+          brew install ghostscript
           sudo sed -i '' '/FileDevice/d' /private/etc/cups/cups-files.conf && echo "FileDevice Yes" | sudo tee -a /private/etc/cups/cups-files.conf
           sudo launchctl stop org.cups.cupsd && sudo launchctl start org.cups.cupsd
           lpadmin -p SamplePrinter -E -v file:///tmp/test.pdf -P /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/PrintCore.framework/Resources/Generic.ppd  
