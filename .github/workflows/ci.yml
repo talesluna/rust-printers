@@ -78,10 +78,35 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install CUPS (Linux only)
+      - name: Setup test printer (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update && sudo apt-get install -y libcups2-dev
+          sudo apt-get update && sudo apt-get install -y libcups2-dev cups cups-pdf
+          sudo systemctl start cups
+          sudo lpadmin -p SamplePrinter -E -v cups-pdf:/ -P /usr/share/ppd/cups-pdf/CUPS-PDF_opt.ppd
+          sudo lpadmin -d SamplePrinter
+          lpstat -p -d
+
+      - name: Setup test printer (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $printer = Get-Printer | Where-Object {$_.Name -like "*PDF*"} | Select-Object -First 1  
+          if ($printer) {  
+            Rename-Printer -Name $printer.Name -NewName "SamplePrinter"
+            Set-Printer -Name "SamplePrinter" -Default  
+
+            Get-Printer -Name "SamplePrinter" | Format-List Name, PrinterStatus, DriverName  
+          } else {  
+            Write-Error "No PDF printer found"  
+            exit 1
+          }
+
+      - name: Setup test printer (MacOS)
+        if: runner.os == 'macOS'
+        run: |
+          lpadmin -p SamplePrinter -E -v file:///tmp/test.pdf -P /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/PrintCore.framework/Resources/Generic.ppd  
+          lpadmin -d SamplePrinter  
+          lpstat -p -d
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
