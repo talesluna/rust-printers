@@ -2,6 +2,7 @@
 
 Provides all system printers, create and manage print jobs.
 
+![Build and tests](https://img.shields.io/github/actions/workflow/status/talesluna/rust-printers/ci.yml?label=build%20%26%20tests)
 ![Crates.io Version](https://img.shields.io/crates/v/printers)
 ![Crates.io License](https://img.shields.io/crates/l/printers)
 ![docs.rs](https://img.shields.io/docsrs/printers)
