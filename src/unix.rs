@@ -3,10 +3,13 @@ use std::str;
 
 use crate::common::{
     base::{
+        errors::PrintersError,
         job::{PrinterJob, PrinterJobOptions, PrinterJobState},
         printer::{Printer, PrinterState},
     },
+    converters::Converter,
     traits::platform::{PlatformActions, PlatformPrinterGetters},
+    utils::file,
 };
 
 mod cups;
@@ -14,34 +17,46 @@ mod utils;
 
 impl PlatformActions for crate::Platform {
     fn get_printers() -> Vec<Printer> {
-        let dests = get_dests().unwrap_or_default();
-        let printers = dests
-            .iter()
-            .map(|p| Printer::from_platform_printer_getters(p))
-            .collect();
+        if let Some(dests) = get_dests() {
+            let printers = dests
+                .iter()
+                .map(|p| Printer::from_platform_printer_getters(p))
+                .collect();
 
-        cups::dests::free(dests);
-        printers
+            cups::dests::free(dests);
+            printers
+        } else {
+            Vec::new()
+        }
     }
 
     fn print(
         printer_system_name: &str,
         buffer: &[u8],
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str> {
-        let path = utils::file::save_tmp_file(buffer);
-        if let Some(file_path) = path {
-            Self::print_file(printer_system_name, file_path.to_str().unwrap(), options)
-        } else {
-            Err("Failed to create temp file")
-        }
+    ) -> Result<u64, PrintersError> {
+        let buffer = options.converter.convert(buffer)?;
+        let buffer = &buffer.as_slice();
+        let file_path = file::save_tmp_file(buffer)?;
+
+        cups::jobs::print_file(
+            printer_system_name,
+            file_path.to_str().unwrap_or_default(),
+            options.name,
+            options.raw_properties,
+        )
     }
 
     fn print_file(
         printer_system_name: &str,
         file_path: &str,
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str> {
+    ) -> Result<u64, PrintersError> {
+        if options.converter != Converter::None {
+            let buffer = file::get_file_as_bytes(file_path)?;
+            return Self::print(printer_system_name, buffer.as_slice(), options);
+        }
+
         cups::jobs::print_file(
             printer_system_name,
             file_path,
@@ -59,18 +74,18 @@ impl PlatformActions for crate::Platform {
     }
 
     fn get_default_printer() -> Option<Printer> {
-        let dests = get_dests().unwrap_or_default();
-        let dest = dests
+        let dests = get_dests()?;
+        let printer = dests
             .iter()
             .find(|d| d.get_is_default())
             .map(|d| Printer::from_platform_printer_getters(d));
 
         cups::dests::free(dests);
-        dest
+        printer
     }
 
     fn get_printer_by_name(printer_name: &str) -> Option<Printer> {
-        let dests = get_dests().unwrap_or_default();
+        let dests = get_dests()?;
         let dest = dests
             .iter()
             .find(|d| d.get_name() == printer_name || d.get_system_name() == printer_name)
@@ -108,7 +123,7 @@ impl PlatformActions for crate::Platform {
         printer_name: &str,
         job_id: u64,
         state: PrinterJobState,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), PrintersError> {
         let result = match state {
             PrinterJobState::PENDING => cups::jobs::restart_job(printer_name, job_id as i32),
             PrinterJobState::PROCESSING => cups::jobs::release_job(printer_name, job_id as i32),
@@ -120,7 +135,7 @@ impl PlatformActions for crate::Platform {
         if result {
             Ok(())
         } else {
-            Err("cups method failed")
+            Err(PrintersError::print_error("cups method failed"))
         }
     }
 }

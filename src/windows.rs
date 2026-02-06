@@ -1,7 +1,12 @@
-use crate::common::base::job::{PrinterJobOptions, PrinterJobState};
-use crate::common::base::printer::PrinterState;
-use crate::common::base::{job::PrinterJob, printer::Printer};
-use crate::common::traits::platform::{PlatformActions, PlatformPrinterGetters};
+use crate::common::{
+    base::{
+        errors::PrintersError,
+        job::{PrinterJob, PrinterJobOptions, PrinterJobState},
+        printer::{Printer, PrinterState},
+    },
+    traits::platform::{PlatformActions, PlatformPrinterGetters},
+    utils::file,
+};
 
 mod utils;
 mod winspool;
@@ -24,7 +29,10 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         buffer: &[u8],
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str> {
+    ) -> Result<u64, PrintersError> {
+        let buffer = options.converter.convert(buffer)?;
+        let buffer = &buffer.as_slice();
+
         winspool::jobs::print_buffer(
             printer_system_name,
             options.name,
@@ -37,19 +45,15 @@ impl PlatformActions for crate::Platform {
         printer_system_name: &str,
         file_path: &str,
         options: PrinterJobOptions,
-    ) -> Result<u64, &'static str> {
-        let buffer = utils::file::get_file_as_bytes(file_path);
-        if buffer.is_some() {
-            Self::print(printer_system_name, &buffer.unwrap(), options)
-        } else {
-            Err("failed to read file")
-        }
+    ) -> Result<u64, PrintersError> {
+        let buffer = file::get_file_as_bytes(file_path)?;
+        Self::print(printer_system_name, &buffer, options)
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
         winspool::jobs::enum_printer_jobs(printer_name)
             .unwrap_or_default()
-            .into_iter()
+            .iter()
             .map(|j| PrinterJob::from_platform_printer_job_getters(j))
             .filter(|j| {
                 if active_only {
@@ -107,13 +111,13 @@ impl PlatformActions for crate::Platform {
         printer_name: &str,
         job_id: u64,
         state: PrinterJobState,
-    ) -> Result<(), &'static str> {
+    ) -> Result<(), PrintersError> {
         return match state {
             PrinterJobState::PAUSED => winspool::jobs::set_job_state(printer_name, 1, job_id),
             PrinterJobState::PENDING => winspool::jobs::set_job_state(printer_name, 4, job_id),
             PrinterJobState::CANCELLED => winspool::jobs::set_job_state(printer_name, 5, job_id),
             PrinterJobState::PROCESSING => winspool::jobs::set_job_state(printer_name, 2, job_id),
-            _ => Err("Operation canot be defined"),
+            _ => Err(PrintersError::job_error("Operation canot be defined")),
         };
     }
 }
