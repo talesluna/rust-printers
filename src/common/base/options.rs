@@ -5,9 +5,9 @@ pub struct OptionsCollection<T, G> {
 }
 
 impl<T, G> OptionsCollection<T, G> {
-    pub fn new<F>(entries: &[(&str, &str)], iterator: F) -> Self
+    pub fn new<F>(entries: &[(&str, String)], iterator: F) -> Self
     where
-        F: Fn(&(&str, &str)) -> ((T, T), G),
+        F: Fn(&(&str, String)) -> ((T, T), G),
     {
         let capacity = entries.len();
         let mut _raw = Vec::with_capacity(capacity);

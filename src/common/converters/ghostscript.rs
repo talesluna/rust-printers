@@ -1,36 +1,91 @@
+use crate::common::base::errors::PrintersError;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
-use crate::common::{base::errors::PrintersError, converters::GhostscriptConverterOptions};
+#[derive(Debug, Clone)]
+pub struct GhostscriptConverter {
+    dpi: u32,
+    device: &'static str,
+    command: &'static str,
+}
 
-pub fn convert(
-    buffer: &[u8],
-    options: &GhostscriptConverterOptions,
-) -> Result<Vec<u8>, PrintersError> {
+impl GhostscriptConverter {
+    pub fn new() -> Self {
+        Self {
+            dpi: 500,
+            device: "ps2write",
+            #[cfg(target_family = "unix")]
+            command: "gs",
+            #[cfg(target_family = "windows")]
+            command: "gswin64c.exe",
+        }
+    }
+
+    pub fn dpi(mut self, dpi: u32) -> Self {
+        self.dpi = dpi;
+        self
+    }
+
+    pub fn command(mut self, command: &'static str) -> Self {
+        self.command = command;
+        self
+    }
+
+    pub fn device(mut self, device: &'static str) -> Self {
+        self.device = device;
+        self
+    }
+
+    pub fn ps2write(mut self) -> Self {
+        self.device = "ps2write";
+        self
+    }
+
+    pub fn png16m(mut self) -> Self {
+        self.device = "png16m";
+        self
+    }
+
+    pub fn jpeg(mut self) -> Self {
+        self.device = "jpeg";
+        self
+    }
+
+    pub fn bmp16m(mut self) -> Self {
+        self.device = "bmp16m";
+        self
+    }
+
+    pub fn pngmono(mut self) -> Self {
+        self.device = "pngmono";
+        self
+    }
+
+    pub fn pdfwrite(mut self) -> Self {
+        self.device = "pdfwrite";
+        self
+    }
+}
+
+pub fn convert(buffer: &[u8], options: &GhostscriptConverter) -> Result<Vec<u8>, PrintersError> {
     let output = run(options, "-", Some(buffer.to_vec()))?;
     Ok(output)
 }
 
 fn run(
-    options: &GhostscriptConverterOptions,
+    options: &GhostscriptConverter,
     input: &str,
     stdin: Option<Vec<u8>>,
 ) -> Result<Vec<u8>, PrintersError> {
-    let mut command = Command::new(match options.command {
-        Some(v) => v,
-        #[cfg(target_family = "unix")]
-        None => "gs",
-        #[cfg(target_family = "windows")]
-        None => "gswin64c.exe",
-    });
+    let mut command = Command::new(options.command);
 
     command.args([
         "-q",
         "-dSAFER",
         "-dBATCH",
         "-dNOPAUSE",
-        format!("-sDEVICE={}", options.device.unwrap_or("png16m")).as_str(),
-        format!("-r{}", options.dpi.unwrap_or(500)).as_str(),
+        format!("-sDEVICE={}", options.device).as_str(),
+        format!("-r{}", options.dpi).as_str(),
         "-sOutputFile=%stdout",
         input,
     ]);

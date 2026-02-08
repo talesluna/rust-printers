@@ -1,11 +1,15 @@
 use std::{
     fmt::{Debug, Error, Formatter},
+    sync::Arc,
     time::SystemTime,
 };
 
-use crate::common::{
-    converters::Converter,
-    traits::platform::{PlatformActions, PlatformPrinterJobGetters},
+use crate::{
+    common::{
+        converters::Converter,
+        traits::platform::{PlatformActions, PlatformPrinterJobGetters},
+    },
+    impl_display,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -102,19 +106,137 @@ impl PrinterJobState {
     }
 }
 
-#[derive(Clone)]
-pub struct PrinterJobOptions<'a> {
-    pub name: Option<&'a str>,
-    pub raw_properties: &'a [(&'a str, &'a str)],
-    pub converter: Converter,
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum PaperSize {
+    A4,
+    Letter,
+    Legal,
+    MM(u32, u32),
+    CM(u32, u32),
+    MT(u32, u32),
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum ColorMode {
+    Color,
+    Monochrome,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Orientation {
+    Portrait,
+    Landscape,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum DuplexMode {
+    Simplex,
+    DuplexLongEdge,
+    DuplexShortEdge,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum PrintQuality {
+    Draft,
+    Normal,
+    High,
+}
+
+#[derive(Clone, Debug)]
+pub struct PrinterJobOptions<'a> {
+    pub name: Option<&'a str>,
+    pub scale: Option<u32>,
+    pub copies: Option<u32>,
+    pub duplex: Option<DuplexMode>,
+    pub collate: Option<bool>,
+    pub data_type: Option<&'a str>,
+    pub paper_size: Option<PaperSize>,
+    pub color_mode: Option<ColorMode>,
+    pub orientation: Option<Orientation>,
+    pub quality: Option<PrintQuality>,
+    pub converter: Option<Arc<dyn Converter>>,
+}
+
+impl_display!(PaperSize, ColorMode, Orientation, DuplexMode, PrintQuality);
+
 impl PrinterJobOptions<'_> {
-    pub fn none() -> Self {
-        PrinterJobOptions {
+    pub fn default() -> Self {
+        Self {
             name: None,
-            raw_properties: &[],
-            converter: Converter::None,
+            scale: None,
+            copies: None,
+            duplex: None,
+            collate: None,
+            data_type: None,
+            converter: None,
+            paper_size: None,
+            color_mode: None,
+            orientation: None,
+            quality: None,
         }
+    }
+
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn name(mut self, name: &'static str) -> Self {
+        self.name = Some(name);
+        self
+    }
+
+    pub fn copies(mut self, copies: u32) -> Self {
+        assert!(copies >= 1, "copies must be greater than 0");
+        self.copies = Some(copies);
+        self
+    }
+
+    pub fn converter<T: Converter>(mut self, converter: T) -> Self
+    where
+        T: Converter + 'static,
+    {
+        self.converter = Some(Arc::new(converter));
+        self
+    }
+
+    pub fn paper_size(mut self, paper_size: PaperSize) -> Self {
+        self.paper_size = Some(paper_size);
+        self
+    }
+
+    pub fn color_mode(mut self, color_mode: ColorMode) -> Self {
+        self.color_mode = Some(color_mode);
+        self
+    }
+
+    pub fn orientation(mut self, orientation: Orientation) -> Self {
+        self.orientation = Some(orientation);
+        self
+    }
+
+    pub fn duplex(mut self, duplex: DuplexMode) -> Self {
+        self.duplex = Some(duplex);
+        self
+    }
+
+    pub fn quality(mut self, quality: PrintQuality) -> Self {
+        self.quality = Some(quality);
+        self
+    }
+
+    pub fn collate(mut self, collate: bool) -> Self {
+        self.collate = Some(collate);
+        self
+    }
+
+    pub fn scale(mut self, scale: u32) -> Self {
+        assert!(scale >= 1 && scale <= 100, "scale must between 1 and 100");
+        self.scale = Some(scale);
+        self
+    }
+
+    pub fn data_type(mut self, data_type: &'static str) -> Self {
+        self.data_type = Some(data_type);
+        self
     }
 }

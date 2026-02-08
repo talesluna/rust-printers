@@ -7,7 +7,6 @@ use crate::common::{
         job::{PrinterJob, PrinterJobOptions, PrinterJobState},
         printer::{Printer, PrinterState},
     },
-    converters::Converter,
     traits::platform::{PlatformActions, PlatformPrinterGetters},
     utils::file,
 };
@@ -35,15 +34,19 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         options: PrinterJobOptions,
     ) -> Result<u64, PrintersError> {
-        let buffer = options.converter.convert(buffer)?;
-        let buffer = &buffer.as_slice();
-        let file_path = file::save_tmp_file(buffer)?;
+        let buffer = if let Some(converter) = options.converter.clone() {
+            converter.convert(buffer)?
+        } else {
+            buffer.to_vec()
+        };
+
+        let file_path = file::save_tmp_file(buffer.as_slice())?;
 
         cups::jobs::print_file(
             printer_system_name,
             file_path.to_str().unwrap_or_default(),
             options.name,
-            options.raw_properties,
+            options,
         )
     }
 
@@ -52,17 +55,12 @@ impl PlatformActions for crate::Platform {
         file_path: &str,
         options: PrinterJobOptions,
     ) -> Result<u64, PrintersError> {
-        if options.converter != Converter::None {
+        if options.converter.is_some() {
             let buffer = file::get_file_as_bytes(file_path)?;
             return Self::print(printer_system_name, buffer.as_slice(), options);
         }
 
-        cups::jobs::print_file(
-            printer_system_name,
-            file_path,
-            options.name,
-            options.raw_properties,
-        )
+        cups::jobs::print_file(printer_system_name, file_path, options.name, options)
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {

@@ -1,5 +1,5 @@
 mod converters {
-    use printers::common::converters::{Converter, GhostscriptConverterOptions};
+    use printers::common::converters::{Converter, Converters};
 
     fn pdf_buffer() -> &'static [u8] {
         b"%PDF-1.1
@@ -19,23 +19,12 @@ mod converters {
 
     #[test]
     fn test_ghostscript() {
-        let result =
-            Converter::Ghostscript(GhostscriptConverterOptions::png16m()).convert(pdf_buffer());
+        let result = Converters::ghostscript().convert(pdf_buffer());
 
         #[cfg(target_family = "unix")]
         assert!(result.is_ok());
 
         #[cfg(target_family = "windows")]
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn test_none() {
-        let result = Converter::None.convert(pdf_buffer());
-        assert!(result.is_ok());
-
-        if let Ok(converted) = result {
-            assert_eq!(converted, pdf_buffer());
-        }
     }
 }

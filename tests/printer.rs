@@ -29,20 +29,18 @@ mod printer {
 
     #[test]
     fn test_print() {
-        for printer in get_printers() {
-            let result = printer.print(
-                "test".as_bytes(),
-                common::base::job::PrinterJobOptions {
-                    converter: common::converters::Converter::None,
-                    name: None,
-                    raw_properties: &[("copies", "1")],
-                },
-            );
+        let printer = if let Some(printer) = get_default_printer() {
+            printer
+        } else {
+            panic!("Default printer must be available")
+        };
 
-            if let Ok(job_id) = result {
-                assert!(job_id > 0);
-            }
-        }
+        let result = printer.print(
+            b"test_print",
+            common::base::job::PrinterJobOptions::default(),
+        );
+
+        assert!(result.is_ok());
     }
 
     #[test]
@@ -50,7 +48,7 @@ mod printer {
         for printer in get_printers() {
             let result = printer.print_file(
                 "/not/valid/path",
-                common::base::job::PrinterJobOptions::none(),
+                common::base::job::PrinterJobOptions::default(),
             );
 
             assert!(result.is_err());

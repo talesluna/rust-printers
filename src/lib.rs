@@ -6,10 +6,7 @@
 //! use printers::{
 //!     common::{
 //!         base::job::PrinterJobOptions,
-//!         converters::{
-//!             Converter,
-//!             GhostscriptConverterOptions,
-//!         },
+//!         converters::Converters,
 //!     },
 //!     get_printer_by_name,
 //!     get_default_printer,
@@ -24,21 +21,22 @@
 //! // Get a printer by the name
 //! let my_printer = get_printer_by_name("my_printer");
 //! if my_printer.is_some() {
-//!     let _job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::none());
+//!     let _job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::default());
 //!     // Err("...") or Ok(())
 //! }
 //!
 //! // Use the default printer
 //! let default_printer = get_default_printer();
 //! if default_printer.is_some() {
-//!     let _job_id = default_printer.unwrap().print(b"hello world", PrinterJobOptions {
-//!         name: None,
-//!         raw_properties: &[
-//!             ("document-format", "application/vnd.cups-raw"),
-//!             ("copies", "2"),
-//!         ],
-//!         converter: Converter::Ghostscript(GhostscriptConverterOptions::ps2write()),
-//!     });
+//!     let _job_id = default_printer
+//!         .unwrap()
+//!         .print(
+//!             b"hello world",
+//!             PrinterJobOptions::new()
+//!             .copies(2)
+//!             .data_type("application/vnd.cups-raw")
+//!             .converter(Converters::ghostscript().ps2write())
+//!         );
 //!     // Err("...") or Ok(())
 //! }
 //!

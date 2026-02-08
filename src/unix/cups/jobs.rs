@@ -1,9 +1,13 @@
 use libc::{c_char, c_int, time_t};
-use std::{os::raw::c_void, ptr, slice, time::SystemTime};
+use std::{ffi::CString, os::raw::c_void, ptr, slice, time::SystemTime};
 
 use crate::{
     common::{
-        base::{errors::PrintersError, options::OptionsCollection},
+        base::{
+            errors::PrintersError,
+            job::{ColorMode, DuplexMode, Orientation, PaperSize, PrintQuality, PrinterJobOptions},
+            options::OptionsCollection,
+        },
         traits::platform::PlatformPrinterJobGetters,
     },
     unix::utils::{
@@ -149,22 +153,14 @@ pub fn print_file(
     printer_name: &str,
     file_path: &str,
     job_name: Option<&str>,
-    raw_options: &[(&str, &str)],
+    job_options: PrinterJobOptions,
 ) -> Result<u64, PrintersError> {
     unsafe {
-        let printer = &str_to_cstring(printer_name);
-        let filename = str_to_cstring(file_path);
         let title = str_to_cstring(job_name.unwrap_or(file_path));
+        let printer = &str_to_cstring(printer_name);
+        let options = generate_options(job_options);
+        let filename = str_to_cstring(file_path);
 
-        let options = OptionsCollection::new(raw_options, |(key, value)| {
-            let key = str_to_cstring(key);
-            let value = str_to_cstring(value);
-            let option = CupsOptionT {
-                name: key.as_ptr(),
-                value: value.as_ptr(),
-            };
-            ((key, value), option)
-        });
 
         let result = cupsPrintFile(
             printer.as_ptr(),
@@ -249,4 +245,70 @@ fn do_request(printer_name: &str, job_id: i32, op: i32) -> bool {
 
         status == CUPS_IPP_OK
     }
+}
+
+fn generate_options(options: PrinterJobOptions) -> OptionsCollection<CString, CupsOptionT> {
+    OptionsCollection::new(
+        vec![
+            ("copies", options.copies.map(|v| v.to_string())),
+            ("collate", options.collate.map(|v| v.to_string())),
+            ("scaling", options.scale.map(|v| v.to_string())),
+            ("document-format", options.data_type.map(|v| v.to_string())),
+            (
+                "media",
+                options.paper_size.map(|v| match v {
+                    PaperSize::A4 => "a4".into(),
+                    PaperSize::Legal => "legal".into(),
+                    PaperSize::Letter => "letter".into(),
+                    PaperSize::MM(width, height) => format!("Custom.{width}x{height}mm"),
+                    PaperSize::CM(width, height) => format!("Custom.{width}x{height}cm"),
+                    PaperSize::MT(width, height) => format!("Custom.{width}x{height}mt"),
+                }),
+            ),
+            (
+                "print-color-mode",
+                options.color_mode.map(|v| match v {
+                    ColorMode::Color => "color".into(),
+                    ColorMode::Monochrome => "monochrome".into(),
+                }),
+            ),
+            (
+                "orientation-requested",
+                options.orientation.map(|v| match v {
+                    Orientation::Portrait => "3".into(),
+                    Orientation::Landscape => "4".into(),
+                }),
+            ),
+            (
+                "sides",
+                options.duplex.map(|v| match v {
+                    DuplexMode::Simplex => "one-sided".into(),
+                    DuplexMode::DuplexLongEdge => "two-sided-long-edge".into(),
+                    DuplexMode::DuplexShortEdge => "two-sided-short-edge".into(),
+                }),
+            ),
+            (
+                "print-quality",
+                options.quality.map(|v| match v {
+                    PrintQuality::High => "5".into(),
+                    PrintQuality::Draft => "3".into(),
+                    PrintQuality::Normal => "4".into(),
+                }),
+            ),
+        ]
+        .iter()
+        .filter(|(_, value)| value.is_some())
+        .map(|(k, v)| (*k, v.clone().unwrap().to_string()))
+        .collect::<Vec<(&str, String)>>()
+        .as_slice(),
+        |(key, value)| {
+            let key = str_to_cstring(*key);
+            let value = str_to_cstring(value.as_str());
+            let option = CupsOptionT {
+                name: key.as_ptr(),
+                value: value.as_ptr(),
+            };
+            ((key, value), option)
+        },
+    )
 }
