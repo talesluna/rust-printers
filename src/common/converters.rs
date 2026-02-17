@@ -4,7 +4,11 @@ use std::fmt::Debug;
 mod ghostscript;
 
 pub trait Converter: Debug {
-    fn convert(&self, buffer: &[u8], job_options: &PrinterJobOptions) -> Result<Vec<u8>, PrintersError>;
+    fn convert(
+        &self,
+        buffer: &[u8],
+        job_options: &PrinterJobOptions,
+    ) -> Result<Vec<u8>, PrintersError>;
 }
 
 pub struct Converters {}
@@ -15,7 +19,11 @@ impl Converters {
 }
 
 impl Converter for ghostscript::GhostscriptConverter {
-    fn convert(&self, buffer: &[u8], job_options: &PrinterJobOptions) -> Result<Vec<u8>, PrintersError> {
+    fn convert(
+        &self,
+        buffer: &[u8],
+        job_options: &PrinterJobOptions,
+    ) -> Result<Vec<u8>, PrintersError> {
         ghostscript::convert(buffer, job_options, self)
     }
 }

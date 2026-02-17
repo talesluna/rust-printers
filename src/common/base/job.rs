@@ -113,7 +113,7 @@ pub enum PaperSize {
     A4,
     Letter,
     Legal,
-    Custom(i32, i32, &'static str, i32)
+    Custom(i32, i32, &'static str, i32),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

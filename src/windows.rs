@@ -30,18 +30,13 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         options: &PrinterJobOptions,
     ) -> Result<u64, PrintersError> {
-        
-        let buffer = if let Some(converter) =&options.converter {
+        let buffer = if let Some(converter) = &options.converter {
             converter.convert(buffer, options)?
-        }else {
+        } else {
             buffer.to_vec()
         };
 
-        winspool::jobs::print_buffer(
-            printer_system_name,
-            buffer.as_slice(),
-            options,
-        )
+        winspool::jobs::print_buffer(printer_system_name, buffer.as_slice(), options)
     }
 
     fn print_file(

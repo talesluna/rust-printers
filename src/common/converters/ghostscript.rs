@@ -177,7 +177,7 @@ pub fn _job_options_into_gs_options(job_options: &PrinterJobOptions) -> Vec<Stri
     }
 
     if let Some(collate) = job_options.collate {
-        gs_options.push(format!("-dCollate={}", collate));
+        gs_options.push(format!("-dCollate={collate}"));
     }
 
     if let Some(scale) = job_options.scale

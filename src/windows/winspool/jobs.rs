@@ -5,7 +5,10 @@ use libc::{c_int, c_ulong, c_ushort, c_void, wchar_t};
 use std::{ffi::c_char, ptr, slice};
 
 use crate::{
-    common::{base::{errors::PrintersError, job::PrinterJobOptions}, traits::platform::PlatformPrinterJobGetters},
+    common::{
+        base::{errors::PrintersError, job::PrinterJobOptions},
+        traits::platform::PlatformPrinterJobGetters,
+    },
     windows::utils::{
         date::{calculate_system_time, get_current_epoch},
         memory::alloc_s,
@@ -155,7 +158,8 @@ fn open_printer(printer_name: &str) -> Result<*mut c_void, PrintersError> {
             &mut printer_handle,
             ptr::null_mut(),
         )
-    } == 0 {
+    } == 0
+    {
         Err(PrintersError::job_error("OpenPrinterW failed"))
     } else {
         Ok(printer_handle)
@@ -177,8 +181,13 @@ pub fn print_buffer(
         let data_type = options.data_type.clone().unwrap_or("RAW".into());
 
         let mut p_data_type = str_to_wide_string(data_type.as_str());
-        let mut p_doc_name =
-            str_to_wide_string(options.name.clone().unwrap_or(get_current_epoch().to_string()).as_str());
+        let mut p_doc_name = str_to_wide_string(
+            options
+                .name
+                .clone()
+                .unwrap_or(get_current_epoch().to_string())
+                .as_str(),
+        );
 
         let doc_info = DOC_INFO_1W {
             pDocName: p_doc_name.as_mut_ptr() as *mut wchar_t,

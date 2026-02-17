@@ -1,5 +1,8 @@
 mod converters {
-    use printers::common::{base::job::PrinterJobOptions, converters::{Converter, Converters}};
+    use printers::common::{
+        base::job::PrinterJobOptions,
+        converters::{Converter, Converters},
+    };
 
     fn pdf_buffer() -> &'static [u8] {
         b"%PDF-1.1

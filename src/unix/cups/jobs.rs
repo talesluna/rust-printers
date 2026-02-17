@@ -155,8 +155,6 @@ pub fn print_file(
     job_options: &PrinterJobOptions,
 ) -> Result<u64, PrintersError> {
     unsafe {
-
-
         let title = str_to_cstring(job_options.name.as_deref().unwrap_or(file_path));
         let printer = &str_to_cstring(printer_name);
         let options = generate_options(job_options);
@@ -213,7 +211,7 @@ fn do_request(printer_name: &str, job_id: i32, op: i32) -> Result<(), PrintersEr
     unsafe {
         let req = ippNewRequest(op);
         if req.is_null() {
-            return Err(PrintersError::print_error("ippNewRequest failed"))
+            return Err(PrintersError::print_error("ippNewRequest failed"));
         }
 
         let uri_param = &str_to_cstring("printer-uri");
@@ -257,14 +255,19 @@ fn generate_options(options: &PrinterJobOptions) -> OptionsCollection<CString, C
             ("copies", options.copies.map(|v| v.to_string())),
             ("collate", options.collate.map(|v| v.to_string())),
             ("scaling", options.scale.map(|v| v.to_string())),
-            ("document-format", options.data_type.as_deref().map(|v| v.to_string())),
+            (
+                "document-format",
+                options.data_type.as_deref().map(|v| v.to_string()),
+            ),
             (
                 "media",
                 options.paper_size.map(|v| match v {
                     PaperSize::A4 => "a4".into(),
                     PaperSize::Legal => "legal".into(),
                     PaperSize::Letter => "letter".into(),
-                    PaperSize::Custom(width, height, unit, _) => format!("Custom.{width}x{height}{unit}"),
+                    PaperSize::Custom(width, height, unit, _) => {
+                        format!("Custom.{width}x{height}{unit}")
+                    }
                 }),
             ),
             (
