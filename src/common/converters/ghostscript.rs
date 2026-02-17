@@ -1,6 +1,4 @@
 use crate::common::base::errors::PrintersError;
-#[cfg(target_family = "windows")]
-use crate::common::base::job::{ColorMode, DuplexMode, PaperSize, PrintQuality};
 use crate::common::base::job::PrinterJobOptions;
 use std::io::Write;
 use std::process::{Command, Stdio};
@@ -65,7 +63,11 @@ impl GhostscriptConverter {
     }
 }
 
-pub fn convert(buffer: &[u8], job_options: &PrinterJobOptions, options: &GhostscriptConverter) -> Result<Vec<u8>, PrintersError> {
+pub fn convert(
+    buffer: &[u8],
+    job_options: &PrinterJobOptions,
+    options: &GhostscriptConverter,
+) -> Result<Vec<u8>, PrintersError> {
     let output = run(options, "-", Some(buffer.to_vec()), job_options)?;
     Ok(output)
 }
@@ -74,7 +76,7 @@ fn run(
     options: &GhostscriptConverter,
     input: &str,
     stdin: Option<Vec<u8>>,
-    job_options: &PrinterJobOptions,
+    _job_options: &PrinterJobOptions,
 ) -> Result<Vec<u8>, PrintersError> {
     let mut command = Command::new(options.command);
 
@@ -87,71 +89,9 @@ fn run(
         "-sOutputFile=%stdout",
     ]);
 
-    // WINDOWS ONLY
+    // WINDOWS ONLY - AUTOMATE OPTIONS WHEN GHOSTSCRIPT AVAILABLE
     #[cfg(target_family = "windows")]
-    {
-        // if job_options.orientation == Some(Orientation::Landscape) {
-        //     command.args([
-        //         "-dAutoRotatePages=/None",
-        //         // "-c 90 rotate 0 -595 translate"
-        //     ]);
-        // }
-    
-        if job_options.color_mode == Some(ColorMode::Monochrome) {
-            command.args([
-                "-dProcessColorModel=/DeviceGray",
-                "-dColorConversionStrategy=/Gray",
-            ]);
-        }
-    
-        if let Some(quality) = job_options.quality {
-            command.arg(format!("-r{}", match quality {
-                PrintQuality::High => 600,
-                PrintQuality::Draft => 150,
-                PrintQuality::Normal => 300,
-            }));
-        }
-    
-        if let Some(paper_size) = job_options.paper_size {
-    
-            let points = match paper_size {
-                PaperSize::Custom(w, h, _, multi) => {
-                    let w = (((w * multi) as f64 * 72.0) / 25.4).round() as i32;
-                    let h = (((h * multi) as f64 * 72.0) / 25.4).round() as i32;
-                    (w, h)
-                },
-                _ => (0, 0)
-            };
-    
-            if points.0 == 0 && points.1 == 0 {
-                command.arg(format!("-sPAPERSIZE={}", paper_size.to_string().to_lowercase()));
-            } else {
-                if points.0 > 0  {
-                    command.arg(format!("-dDEVICEWIDTHPOINTS={}", points.0));
-                }
-                if points.1 > 0 {
-                    command.arg(format!("-dDEVICEHEIGHTPOINTS={}", points.1));
-                }
-            }
-            command.arg("-dPDFFitPage");
-        }
-    
-        if let Some(collate) = job_options.collate {
-            command.arg(format!("-dCollate={}", collate));
-        }
-    
-        if let Some(scale) = job_options.scale && scale > 0 {
-            command.arg(format!("-dScale={:.2}", scale/100));
-        }
-    
-        if let Some(duplex_mode) = job_options.duplex {
-            match duplex_mode {
-                DuplexMode::Simplex => command.arg("-dDuplex=false"),
-                DuplexMode::DuplexLongEdge => command.args(["-dDuplex=true", "-dTumble=false"]),
-                DuplexMode::DuplexShortEdge => command.args(["-dDuplex=true", "-dTumble=true"]),
-            };
-        }
-    }
+    command.args(_job_options_into_gs_options(_job_options));
 
     command.args(["-f", input]);
 
@@ -184,4 +124,80 @@ fn run(
             output.status.code().unwrap_or(1)
         )))
     }
+}
+
+pub fn _job_options_into_gs_options(job_options: &PrinterJobOptions) -> Vec<String> {
+    use crate::common::base::job::{ColorMode, DuplexMode, Orientation, PaperSize, PrintQuality};
+
+    let mut gs_options: Vec<String> = Vec::new();
+
+    let landscape = job_options.orientation == Some(Orientation::Landscape);
+
+    if job_options.color_mode == Some(ColorMode::Monochrome) {
+        gs_options.push("-dProcessColorModel=/DeviceGray".into());
+        gs_options.push("-dColorConversionStrategy=/Gray".into());
+    }
+
+    if let Some(quality) = job_options.quality {
+        gs_options.push(format!(
+            "-r{}",
+            match quality {
+                PrintQuality::High => 600,
+                PrintQuality::Draft => 150,
+                PrintQuality::Normal => 300,
+            }
+        ));
+    }
+
+    if let Some(paper_size) = job_options.paper_size {
+        let points = match paper_size {
+            PaperSize::Custom(w, h, _, multi) => {
+                let w = (((w * multi) as f64 * 72.0) / 25.4).round() as i32;
+                let h = (((h * multi) as f64 * 72.0) / 25.4).round() as i32;
+                if landscape { (h, w) } else { (w, h) }
+            }
+            _ => (0, 0),
+        };
+
+        if points.0 == 0 && points.1 == 0 {
+            gs_options.push(format!(
+                "-sPAPERSIZE={}{}",
+                paper_size.to_string().to_lowercase(),
+                if landscape { "rotated" } else { "" }
+            ));
+        } else {
+            if points.0 > 0 {
+                gs_options.push(format!("-dDEVICEWIDTHPOINTS={}", points.0));
+            }
+            if points.1 > 0 {
+                gs_options.push(format!("-dDEVICEHEIGHTPOINTS={}", points.1));
+            }
+        }
+        gs_options.push("-dPDFFitPage".into());
+    }
+
+    if let Some(collate) = job_options.collate {
+        gs_options.push(format!("-dCollate={}", collate));
+    }
+
+    if let Some(scale) = job_options.scale
+        && scale > 0
+    {
+        gs_options.push(format!("-dScale={:.2}", scale / 100));
+    }
+
+    if let Some(duplex_mode) = job_options.duplex {
+        match duplex_mode {
+            DuplexMode::Simplex => gs_options.push("-dDuplex=false".into()),
+            duplex => {
+                gs_options.push("-dDuplex=true".into());
+                gs_options.push(format!(
+                    "-dTumble={}",
+                    duplex == DuplexMode::DuplexShortEdge
+                ));
+            }
+        };
+    }
+
+    gs_options
 }

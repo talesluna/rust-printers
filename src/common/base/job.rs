@@ -128,7 +128,7 @@ pub enum Orientation {
     Landscape,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum DuplexMode {
     Simplex,
     DuplexLongEdge,
