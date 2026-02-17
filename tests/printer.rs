@@ -35,21 +35,40 @@ mod printer {
             panic!("Default printer must be available")
         };
 
-        let result = printer.print(
-            b"test_print",
-            common::base::job::PrinterJobOptions::default(),
-        );
-
+        let result = printer.print(b"test_print");
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_print_file() {
         for printer in get_printers() {
-            let result = printer.print_file(
-                "/not/valid/path",
-                common::base::job::PrinterJobOptions::default(),
-            );
+            let result = printer.print_file("/not/valid/path");
+            assert!(result.is_err());
+        }
+    }
+
+    #[test]
+    fn test_job_print() {
+        let result = get_default_printer()
+            .unwrap()
+            .new_job()
+            .name("test_job_print")
+            .copies(1)
+            .data_type("text/plain")
+            .print(b"test_job_print");
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_job_print_file() {
+        for printer in get_printers() {
+            let result = printer
+                .new_job()
+                .name("test_job_print")
+                .copies(1)
+                .data_type("text/plain")
+                .print_file("/not/valid/path");
 
             assert!(result.is_err());
         }

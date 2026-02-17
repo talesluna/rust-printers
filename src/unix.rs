@@ -32,10 +32,10 @@ impl PlatformActions for crate::Platform {
     fn print(
         printer_system_name: &str,
         buffer: &[u8],
-        options: PrinterJobOptions,
+        options: &PrinterJobOptions,
     ) -> Result<u64, PrintersError> {
         let buffer = if let Some(converter) = options.converter.clone() {
-            converter.convert(buffer)?
+            converter.convert(buffer, options)?
         } else {
             buffer.to_vec()
         };
@@ -45,7 +45,6 @@ impl PlatformActions for crate::Platform {
         cups::jobs::print_file(
             printer_system_name,
             file_path.to_str().unwrap_or_default(),
-            options.name,
             options,
         )
     }
@@ -53,14 +52,14 @@ impl PlatformActions for crate::Platform {
     fn print_file(
         printer_system_name: &str,
         file_path: &str,
-        options: PrinterJobOptions,
+        options: &PrinterJobOptions,
     ) -> Result<u64, PrintersError> {
         if options.converter.is_some() {
             let buffer = file::get_file_as_bytes(file_path)?;
             return Self::print(printer_system_name, buffer.as_slice(), options);
         }
 
-        cups::jobs::print_file(printer_system_name, file_path, options.name, options)
+        cups::jobs::print_file(printer_system_name, file_path, options)
     }
 
     fn get_printer_jobs(printer_name: &str, active_only: bool) -> Vec<PrinterJob> {
@@ -120,20 +119,14 @@ impl PlatformActions for crate::Platform {
     fn set_job_state(
         printer_name: &str,
         job_id: u64,
-        state: PrinterJobState,
+        state: &PrinterJobState,
     ) -> Result<(), PrintersError> {
-        let result = match state {
+        match state {
             PrinterJobState::PENDING => cups::jobs::restart_job(printer_name, job_id as i32),
             PrinterJobState::PROCESSING => cups::jobs::release_job(printer_name, job_id as i32),
             PrinterJobState::PAUSED => cups::jobs::hold_job(printer_name, job_id as i32),
             PrinterJobState::CANCELLED => cups::jobs::cancel_job(printer_name, job_id as i32),
-            _ => false,
-        };
-
-        if result {
-            Ok(())
-        } else {
-            Err(PrintersError::print_error("cups method failed"))
+            _ => Err(PrintersError::job_error("Operation canot be defined")),
         }
     }
 }

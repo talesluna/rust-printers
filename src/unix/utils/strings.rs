@@ -10,7 +10,7 @@ pub fn c_char_to_string(value: *const c_char) -> String {
     }
 }
 
-pub fn str_to_cstring(value: &str) -> CString {
-    let c_string = CString::new(value);
+pub fn str_to_cstring<S: Into<String>>(value: S) -> CString {
+    let c_string = CString::new(value.into());
     c_string.unwrap_or_default()
 }

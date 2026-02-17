@@ -5,7 +5,7 @@ use libc::{c_int, c_ulong, c_ushort, c_void, wchar_t};
 use std::{ffi::c_char, ptr, slice};
 
 use crate::{
-    common::{base::errors::PrintersError, traits::platform::PlatformPrinterJobGetters},
+    common::{base::{errors::PrintersError, job::PrinterJobOptions}, traits::platform::PlatformPrinterJobGetters},
     windows::utils::{
         date::{calculate_system_time, get_current_epoch},
         memory::alloc_s,
@@ -18,12 +18,12 @@ unsafe extern "system" {
     fn OpenPrinterW(
         pPrinterName: *const wchar_t,
         phPrinter: *mut *mut c_void,
-        pDefault: *mut PrinterDefaultW,
+        pDefault: *mut c_void,
     ) -> c_int;
     fn StartDocPrinterW(
         hPrinter: *mut c_void,
         Level: c_ulong,
-        pDocInfo: *const DocInfo1,
+        pDocInfo: *const DOC_INFO_1W,
     ) -> c_ulong;
     fn StartPagePrinter(hPrinter: *mut c_void) -> c_int;
     fn WritePrinter(
@@ -55,14 +55,7 @@ unsafe extern "system" {
 }
 
 #[repr(C)]
-struct PrinterDefaultW {
-    pDatatype: *mut wchar_t,
-    pDevMode: *mut c_void,
-    DesiredAccess: c_ulong,
-}
-
-#[repr(C)]
-struct DocInfo1 {
+struct DOC_INFO_1W {
     pDocName: *mut wchar_t,
     pOutputFile: *mut wchar_t,
     pDatatype: *mut wchar_t,
@@ -156,18 +149,17 @@ fn open_printer(printer_name: &str) -> Result<*mut c_void, PrintersError> {
     let printer_name = str_to_wide_string(printer_name);
     let mut printer_handle: *mut c_void = ptr::null_mut();
 
-    return if unsafe {
+    if unsafe {
         OpenPrinterW(
             printer_name.as_ptr() as *const wchar_t,
             &mut printer_handle,
             ptr::null_mut(),
         )
-    } == 0
-    {
+    } == 0 {
         Err(PrintersError::job_error("OpenPrinterW failed"))
     } else {
         Ok(printer_handle)
-    };
+    }
 }
 
 /**
@@ -175,29 +167,20 @@ fn open_printer(printer_name: &str) -> Result<*mut c_void, PrintersError> {
  */
 pub fn print_buffer(
     printer_name: &str,
-    job_name: Option<&str>,
     buffer: &[u8],
-    options: &[(&str, &str)],
+    options: &PrinterJobOptions,
 ) -> Result<u64, PrintersError> {
     unsafe {
         let printer_handle = open_printer(printer_name)?;
 
-        let mut copies = 1;
-        let mut data_type = "RAW";
+        let copies = options.copies.clone().unwrap_or(1);
+        let data_type = options.data_type.clone().unwrap_or("RAW".into());
 
-        for option in options {
-            match option.0 {
-                "copies" => copies = option.1.parse().unwrap_or(copies),
-                "document-format" => data_type = option.1,
-                _ => {}
-            }
-        }
-
-        let mut p_data_type = str_to_wide_string(data_type);
+        let mut p_data_type = str_to_wide_string(data_type.as_str());
         let mut p_doc_name =
-            str_to_wide_string(job_name.unwrap_or(get_current_epoch().to_string().as_str()));
+            str_to_wide_string(options.name.clone().unwrap_or(get_current_epoch().to_string()).as_str());
 
-        let doc_info = DocInfo1 {
+        let doc_info = DOC_INFO_1W {
             pDocName: p_doc_name.as_mut_ptr() as *mut wchar_t,
             pDatatype: p_data_type.as_mut_ptr() as *mut wchar_t,
             pOutputFile: ptr::null_mut(),

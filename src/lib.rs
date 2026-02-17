@@ -21,22 +21,20 @@
 //! // Get a printer by the name
 //! let my_printer = get_printer_by_name("my_printer");
 //! if my_printer.is_some() {
-//!     let _job_id = my_printer.unwrap().print_file("notes.txt", PrinterJobOptions::default());
+//!     let _job_id = my_printer.unwrap().print_file("notes.txt");
 //!     // Err("...") or Ok(())
 //! }
 //!
-//! // Use the default printer
+//! // Use the default printer and job functions
 //! let default_printer = get_default_printer();
 //! if default_printer.is_some() {
 //!     let _job_id = default_printer
 //!         .unwrap()
-//!         .print(
-//!             b"hello world",
-//!             PrinterJobOptions::new()
-//!             .copies(2)
-//!             .data_type("application/vnd.cups-raw")
-//!             .converter(Converters::ghostscript().ps2write())
-//!         );
+//!         .new_job()
+//!         .copies(2)
+//!         .data_type("application/vnd.cups-raw")
+//!         .converter(Converters::ghostscript().ps2write())
+//!         .print(b"hello world");
 //!     // Err("...") or Ok(())
 //! }
 //!

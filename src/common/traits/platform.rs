@@ -37,12 +37,12 @@ pub trait PlatformActions {
     fn print(
         printer_system_name: &str,
         buffer: &[u8],
-        options: PrinterJobOptions,
+        options: &PrinterJobOptions,
     ) -> Result<u64, PrintersError>;
     fn print_file(
         printer_system_name: &str,
         file_path: &str,
-        options: PrinterJobOptions,
+        options: &PrinterJobOptions,
     ) -> Result<u64, PrintersError>;
     fn get_printer_jobs(
         printer_name: &str,
@@ -55,6 +55,6 @@ pub trait PlatformActions {
     fn set_job_state(
         printer_name: &str,
         job_id: u64,
-        state: PrinterJobState,
+        state: &PrinterJobState,
     ) -> Result<(), PrintersError>;
 }

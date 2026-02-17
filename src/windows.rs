@@ -28,23 +28,26 @@ impl PlatformActions for crate::Platform {
     fn print(
         printer_system_name: &str,
         buffer: &[u8],
-        options: PrinterJobOptions,
+        options: &PrinterJobOptions,
     ) -> Result<u64, PrintersError> {
-        let buffer = options.converter.convert(buffer)?;
-        let buffer = &buffer.as_slice();
+        
+        let buffer = if let Some(converter) =&options.converter {
+            converter.convert(buffer, options)?
+        }else {
+            buffer.to_vec()
+        };
 
         winspool::jobs::print_buffer(
             printer_system_name,
-            options.name,
-            buffer,
-            options.raw_properties,
+            buffer.as_slice(),
+            options,
         )
     }
 
     fn print_file(
         printer_system_name: &str,
         file_path: &str,
-        options: PrinterJobOptions,
+        options: &PrinterJobOptions,
     ) -> Result<u64, PrintersError> {
         let buffer = file::get_file_as_bytes(file_path)?;
         Self::print(printer_system_name, &buffer, options)
@@ -110,7 +113,7 @@ impl PlatformActions for crate::Platform {
     fn set_job_state(
         printer_name: &str,
         job_id: u64,
-        state: PrinterJobState,
+        state: &PrinterJobState,
     ) -> Result<(), PrintersError> {
         return match state {
             PrinterJobState::PAUSED => winspool::jobs::set_job_state(printer_name, 1, job_id),

@@ -152,15 +152,15 @@ pub fn get_printer_jobs(printer_name: &str, active_only: bool) -> Option<&'stati
 pub fn print_file(
     printer_name: &str,
     file_path: &str,
-    job_name: Option<&str>,
-    job_options: PrinterJobOptions,
+    job_options: &PrinterJobOptions,
 ) -> Result<u64, PrintersError> {
     unsafe {
-        let title = str_to_cstring(job_name.unwrap_or(file_path));
+
+
+        let title = str_to_cstring(job_options.name.as_deref().unwrap_or(file_path));
         let printer = &str_to_cstring(printer_name);
         let options = generate_options(job_options);
         let filename = str_to_cstring(file_path);
-
 
         let result = cupsPrintFile(
             printer.as_ptr(),
@@ -181,39 +181,39 @@ pub fn print_file(
 /**
  * Send cancel job request to cups
  */
-pub fn hold_job(printer_name: &str, job_id: i32) -> bool {
+pub fn hold_job(printer_name: &str, job_id: i32) -> Result<(), PrintersError> {
     do_request(printer_name, job_id, CUPS_IPP_OP_HOLD_JOB)
 }
 
 /**
  * Send release job request to cups
  */
-pub fn release_job(printer_name: &str, job_id: i32) -> bool {
+pub fn release_job(printer_name: &str, job_id: i32) -> Result<(), PrintersError> {
     do_request(printer_name, job_id, CUPS_IPP_OP_RELEASE_JOB)
 }
 
 /**
  * Send restart job request to cups
  */
-pub fn restart_job(printer_name: &str, job_id: i32) -> bool {
+pub fn restart_job(printer_name: &str, job_id: i32) -> Result<(), PrintersError> {
     do_request(printer_name, job_id, CUPS_IPP_OP_RESTART_JOB)
 }
 
 /**
  * Send cancel job request to cups
  */
-pub fn cancel_job(printer_name: &str, job_id: i32) -> bool {
+pub fn cancel_job(printer_name: &str, job_id: i32) -> Result<(), PrintersError> {
     do_request(printer_name, job_id, CUPS_IPP_OP_CANCEL_JOB)
 }
 
 /**
  * Send request op to cups
  */
-fn do_request(printer_name: &str, job_id: i32, op: i32) -> bool {
+fn do_request(printer_name: &str, job_id: i32, op: i32) -> Result<(), PrintersError> {
     unsafe {
         let req = ippNewRequest(op);
         if req.is_null() {
-            return false;
+            return Err(PrintersError::print_error("ippNewRequest failed"))
         }
 
         let uri_param = &str_to_cstring("printer-uri");
@@ -243,26 +243,28 @@ fn do_request(printer_name: &str, job_id: i32, op: i32) -> bool {
         let status = cupsLastError();
         ippDelete(response);
 
-        status == CUPS_IPP_OK
+        if status == CUPS_IPP_OK {
+            Ok(())
+        } else {
+            Err(PrintersError::print_error("cupsDoRequest failed"))
+        }
     }
 }
 
-fn generate_options(options: PrinterJobOptions) -> OptionsCollection<CString, CupsOptionT> {
+fn generate_options(options: &PrinterJobOptions) -> OptionsCollection<CString, CupsOptionT> {
     OptionsCollection::new(
         vec![
             ("copies", options.copies.map(|v| v.to_string())),
             ("collate", options.collate.map(|v| v.to_string())),
             ("scaling", options.scale.map(|v| v.to_string())),
-            ("document-format", options.data_type.map(|v| v.to_string())),
+            ("document-format", options.data_type.as_deref().map(|v| v.to_string())),
             (
                 "media",
                 options.paper_size.map(|v| match v {
                     PaperSize::A4 => "a4".into(),
                     PaperSize::Legal => "legal".into(),
                     PaperSize::Letter => "letter".into(),
-                    PaperSize::MM(width, height) => format!("Custom.{width}x{height}mm"),
-                    PaperSize::CM(width, height) => format!("Custom.{width}x{height}cm"),
-                    PaperSize::MT(width, height) => format!("Custom.{width}x{height}mt"),
+                    PaperSize::Custom(width, height, unit, _) => format!("Custom.{width}x{height}{unit}"),
                 }),
             ),
             (

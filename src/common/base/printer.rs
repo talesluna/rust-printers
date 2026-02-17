@@ -174,19 +174,23 @@ impl Printer {
     /**
      * Print bytes
      */
-    pub fn print(&self, buffer: &[u8], options: PrinterJobOptions) -> Result<u64, PrintersError> {
-        crate::Platform::print(self.system_name.as_str(), buffer, options)
+    pub fn print(&self, buffer: &[u8]) -> Result<u64, PrintersError> {
+        crate::Platform::print(
+            self.system_name.as_str(),
+            buffer,
+            &PrinterJobOptions::default(),
+        )
     }
 
     /**
      * Print file
      */
-    pub fn print_file(
-        &self,
-        file_path: &str,
-        options: PrinterJobOptions,
-    ) -> Result<u64, PrintersError> {
-        crate::Platform::print_file(self.system_name.as_str(), file_path, options)
+    pub fn print_file(&self, file_path: &str) -> Result<u64, PrintersError> {
+        crate::Platform::print_file(
+            self.system_name.as_str(),
+            file_path,
+            &PrinterJobOptions::default(),
+        )
     }
 
     /**
@@ -207,28 +211,35 @@ impl Printer {
      * Pause an printer job
      */
     pub fn pause_job(&self, job_id: u64) -> Result<(), PrintersError> {
-        crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::PAUSED)
+        crate::Platform::set_job_state(&self.system_name, job_id, &PrinterJobState::PAUSED)
     }
 
     /**
      * Resume an paused printer job
      */
     pub fn resume_job(&self, job_id: u64) -> Result<(), PrintersError> {
-        crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::PROCESSING)
+        crate::Platform::set_job_state(&self.system_name, job_id, &PrinterJobState::PROCESSING)
     }
 
     /**
      * restart an printer job
      */
     pub fn restart_job(&self, job_id: u64) -> Result<(), PrintersError> {
-        crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::PENDING)
+        crate::Platform::set_job_state(&self.system_name, job_id, &PrinterJobState::PENDING)
     }
 
     /**
      * Cancel an printer job
      */
     pub fn cancel_job(&self, job_id: u64) -> Result<(), PrintersError> {
-        crate::Platform::set_job_state(&self.system_name, job_id, PrinterJobState::CANCELLED)
+        crate::Platform::set_job_state(&self.system_name, job_id, &PrinterJobState::CANCELLED)
+    }
+
+    /**
+     * Start job with option for this specific printer
+     */
+    pub fn new_job(&self) -> PrinterJobOptions {
+        PrinterJobOptions::from_printer(&self.system_name)
     }
 }
 

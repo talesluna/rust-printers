@@ -5,7 +5,9 @@ use std::{
 };
 
 use crate::{
+    Platform,
     common::{
+        base::errors::PrintersError,
         converters::Converter,
         traits::platform::{PlatformActions, PlatformPrinterJobGetters},
     },
@@ -111,18 +113,16 @@ pub enum PaperSize {
     A4,
     Letter,
     Legal,
-    MM(u32, u32),
-    CM(u32, u32),
-    MT(u32, u32),
+    Custom(i32, i32, &'static str, i32)
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ColorMode {
     Color,
     Monochrome,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Orientation {
     Portrait,
     Landscape,
@@ -142,56 +142,44 @@ pub enum PrintQuality {
     High,
 }
 
-#[derive(Clone, Debug)]
-pub struct PrinterJobOptions<'a> {
-    pub name: Option<&'a str>,
-    pub scale: Option<u32>,
-    pub copies: Option<u32>,
+#[derive(Clone, Debug, Default)]
+pub struct PrinterJobOptions {
+    pub name: Option<String>,
+    pub scale: Option<i16>,
+    pub copies: Option<i16>,
     pub duplex: Option<DuplexMode>,
     pub collate: Option<bool>,
-    pub data_type: Option<&'a str>,
+    pub quality: Option<PrintQuality>,
+    pub data_type: Option<String>,
     pub paper_size: Option<PaperSize>,
     pub color_mode: Option<ColorMode>,
     pub orientation: Option<Orientation>,
-    pub quality: Option<PrintQuality>,
     pub converter: Option<Arc<dyn Converter>>,
+    printer_name: Option<String>,
 }
 
 impl_display!(PaperSize, ColorMode, Orientation, DuplexMode, PrintQuality);
 
-impl PrinterJobOptions<'_> {
-    pub fn default() -> Self {
+impl PrinterJobOptions {
+    pub fn from_printer(printer_name: &str) -> Self {
         Self {
-            name: None,
-            scale: None,
-            copies: None,
-            duplex: None,
-            collate: None,
-            data_type: None,
-            converter: None,
-            paper_size: None,
-            color_mode: None,
-            orientation: None,
-            quality: None,
+            printer_name: Some(printer_name.into()),
+            ..Default::default()
         }
     }
 
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     pub fn name(mut self, name: &'static str) -> Self {
-        self.name = Some(name);
+        self.name = Some(name.into());
         self
     }
 
-    pub fn copies(mut self, copies: u32) -> Self {
+    pub fn copies(mut self, copies: i16) -> Self {
         assert!(copies >= 1, "copies must be greater than 0");
         self.copies = Some(copies);
         self
     }
 
-    pub fn converter<T: Converter>(mut self, converter: T) -> Self
+    pub fn converter<T>(mut self, converter: T) -> Self
     where
         T: Converter + 'static,
     {
@@ -200,27 +188,86 @@ impl PrinterJobOptions<'_> {
     }
 
     pub fn paper_size(mut self, paper_size: PaperSize) -> Self {
+        assert!(self.paper_size.is_none(), "paper_size duplicated");
         self.paper_size = Some(paper_size);
         self
     }
 
-    pub fn color_mode(mut self, color_mode: ColorMode) -> Self {
-        self.color_mode = Some(color_mode);
+    pub fn paper_size_mm(mut self, w: i32, h: i32) -> Self {
+        assert!(self.paper_size.is_none(), "paper_size duplicated");
+        self.paper_size = Some(PaperSize::Custom(w, h, "mm", 1));
         self
     }
 
-    pub fn orientation(mut self, orientation: Orientation) -> Self {
-        self.orientation = Some(orientation);
+    pub fn paper_size_cm(mut self, w: i32, h: i32) -> Self {
+        assert!(self.paper_size.is_none(), "paper_size duplicated");
+        self.paper_size = Some(PaperSize::Custom(w, h, "cm", 100));
         self
     }
 
-    pub fn duplex(mut self, duplex: DuplexMode) -> Self {
-        self.duplex = Some(duplex);
+    pub fn paper_size_mt(mut self, w: i32, h: i32) -> Self {
+        assert!(self.paper_size.is_none(), "paper_size duplicated");
+        self.paper_size = Some(PaperSize::Custom(w, h, "mt", 1000));
         self
     }
 
-    pub fn quality(mut self, quality: PrintQuality) -> Self {
-        self.quality = Some(quality);
+    pub fn color(mut self) -> Self {
+        assert!(self.color_mode.is_none(), "color_mode duplicated");
+        self.color_mode = Some(ColorMode::Color);
+        self
+    }
+
+    pub fn monochrome(mut self) -> Self {
+        assert!(self.color_mode.is_none(), "color_mode duplicated");
+        self.color_mode = Some(ColorMode::Monochrome);
+        self
+    }
+
+    pub fn landscape(mut self) -> Self {
+        assert!(self.orientation.is_none(), "orientation duplicated");
+        self.orientation = Some(Orientation::Landscape);
+        self
+    }
+
+    pub fn portrait(mut self) -> Self {
+        assert!(self.orientation.is_none(), "orientation duplicated");
+        self.orientation = Some(Orientation::Portrait);
+        self
+    }
+
+    pub fn simplex(mut self) -> Self {
+        assert!(self.duplex.is_none(), "duplex duplicated");
+        self.duplex = Some(DuplexMode::Simplex);
+        self
+    }
+
+    pub fn duplex_long(mut self) -> Self {
+        assert!(self.duplex.is_none(), "duplex duplicated");
+        self.duplex = Some(DuplexMode::DuplexLongEdge);
+        self
+    }
+
+    pub fn duplex_short(mut self) -> Self {
+        assert!(self.duplex.is_none(), "duplex duplicated");
+        self.duplex = Some(DuplexMode::DuplexShortEdge);
+        self
+    }
+
+    pub fn quality_normal(mut self) -> Self {
+        assert!(self.quality.is_none(), "quality duplicated");
+        self.quality = Some(PrintQuality::Normal);
+        self
+    }
+
+    pub fn quality_draft(mut self) -> Self {
+        assert!(self.quality.is_none(), "quality duplicated");
+        self.quality = Some(PrintQuality::Draft);
+        self
+    }
+
+    pub fn quality_high(mut self) -> Self {
+        assert!(self.quality.is_none(), "quality duplicated");
+        self.quality = Some(PrintQuality::High);
         self
     }
 
@@ -229,14 +276,30 @@ impl PrinterJobOptions<'_> {
         self
     }
 
-    pub fn scale(mut self, scale: u32) -> Self {
-        assert!(scale >= 1 && scale <= 100, "scale must between 1 and 100");
+    pub fn scale(mut self, scale: i16) -> Self {
+        assert!((1..=100).contains(&scale), "scale must between 1 and 100");
         self.scale = Some(scale);
         self
     }
 
     pub fn data_type(mut self, data_type: &'static str) -> Self {
-        self.data_type = Some(data_type);
+        self.data_type = Some(data_type.into());
         self
+    }
+
+    pub fn print(self, buffer: &[u8]) -> Result<u64, PrintersError> {
+        if let Some(printer_system_name) = &self.printer_name {
+            Platform::print(printer_system_name, buffer, &self)
+        } else {
+            Err(PrintersError::print_error("unknown printer"))
+        }
+    }
+
+    pub fn print_file(self, file_path: &str) -> Result<u64, PrintersError> {
+        if let Some(printer_system_name) = &self.printer_name {
+            Platform::print_file(printer_system_name, file_path, &self)
+        } else {
+            Err(PrintersError::print_error("unknown printer"))
+        }
     }
 }

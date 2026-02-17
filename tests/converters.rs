@@ -1,5 +1,5 @@
 mod converters {
-    use printers::common::converters::{Converter, Converters};
+    use printers::common::{base::job::PrinterJobOptions, converters::{Converter, Converters}};
 
     fn pdf_buffer() -> &'static [u8] {
         b"%PDF-1.1
@@ -19,7 +19,7 @@ mod converters {
 
     #[test]
     fn test_ghostscript() {
-        let result = Converters::ghostscript().convert(pdf_buffer());
+        let result = Converters::ghostscript().convert(pdf_buffer(), &PrinterJobOptions::default());
 
         #[cfg(target_family = "unix")]
         assert!(result.is_ok());

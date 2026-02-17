@@ -1,18 +1,19 @@
 use crate::common::base::errors::PrintersError;
+#[cfg(target_family = "windows")]
+use crate::common::base::job::{ColorMode, DuplexMode, PaperSize, PrintQuality};
+use crate::common::base::job::PrinterJobOptions;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
 #[derive(Debug, Clone)]
 pub struct GhostscriptConverter {
-    dpi: u32,
     device: &'static str,
     command: &'static str,
 }
 
-impl GhostscriptConverter {
-    pub fn new() -> Self {
+impl Default for GhostscriptConverter {
+    fn default() -> Self {
         Self {
-            dpi: 500,
             device: "ps2write",
             #[cfg(target_family = "unix")]
             command: "gs",
@@ -20,12 +21,9 @@ impl GhostscriptConverter {
             command: "gswin64c.exe",
         }
     }
+}
 
-    pub fn dpi(mut self, dpi: u32) -> Self {
-        self.dpi = dpi;
-        self
-    }
-
+impl GhostscriptConverter {
     pub fn command(mut self, command: &'static str) -> Self {
         self.command = command;
         self
@@ -67,8 +65,8 @@ impl GhostscriptConverter {
     }
 }
 
-pub fn convert(buffer: &[u8], options: &GhostscriptConverter) -> Result<Vec<u8>, PrintersError> {
-    let output = run(options, "-", Some(buffer.to_vec()))?;
+pub fn convert(buffer: &[u8], job_options: &PrinterJobOptions, options: &GhostscriptConverter) -> Result<Vec<u8>, PrintersError> {
+    let output = run(options, "-", Some(buffer.to_vec()), job_options)?;
     Ok(output)
 }
 
@@ -76,6 +74,7 @@ fn run(
     options: &GhostscriptConverter,
     input: &str,
     stdin: Option<Vec<u8>>,
+    job_options: &PrinterJobOptions,
 ) -> Result<Vec<u8>, PrintersError> {
     let mut command = Command::new(options.command);
 
@@ -85,10 +84,76 @@ fn run(
         "-dBATCH",
         "-dNOPAUSE",
         format!("-sDEVICE={}", options.device).as_str(),
-        format!("-r{}", options.dpi).as_str(),
         "-sOutputFile=%stdout",
-        input,
     ]);
+
+    // WINDOWS ONLY
+    #[cfg(target_family = "windows")]
+    {
+        // if job_options.orientation == Some(Orientation::Landscape) {
+        //     command.args([
+        //         "-dAutoRotatePages=/None",
+        //         // "-c 90 rotate 0 -595 translate"
+        //     ]);
+        // }
+    
+        if job_options.color_mode == Some(ColorMode::Monochrome) {
+            command.args([
+                "-dProcessColorModel=/DeviceGray",
+                "-dColorConversionStrategy=/Gray",
+            ]);
+        }
+    
+        if let Some(quality) = job_options.quality {
+            command.arg(format!("-r{}", match quality {
+                PrintQuality::High => 600,
+                PrintQuality::Draft => 150,
+                PrintQuality::Normal => 300,
+            }));
+        }
+    
+        if let Some(paper_size) = job_options.paper_size {
+    
+            let points = match paper_size {
+                PaperSize::Custom(w, h, _, multi) => {
+                    let w = (((w * multi) as f64 * 72.0) / 25.4).round() as i32;
+                    let h = (((h * multi) as f64 * 72.0) / 25.4).round() as i32;
+                    (w, h)
+                },
+                _ => (0, 0)
+            };
+    
+            if points.0 == 0 && points.1 == 0 {
+                command.arg(format!("-sPAPERSIZE={}", paper_size.to_string().to_lowercase()));
+            } else {
+                if points.0 > 0  {
+                    command.arg(format!("-dDEVICEWIDTHPOINTS={}", points.0));
+                }
+                if points.1 > 0 {
+                    command.arg(format!("-dDEVICEHEIGHTPOINTS={}", points.1));
+                }
+            }
+            command.arg("-dPDFFitPage");
+        }
+    
+        if let Some(collate) = job_options.collate {
+            command.arg(format!("-dCollate={}", collate));
+        }
+    
+        if let Some(scale) = job_options.scale && scale > 0 {
+            command.arg(format!("-dScale={:.2}", scale/100));
+        }
+    
+        if let Some(duplex_mode) = job_options.duplex {
+            match duplex_mode {
+                DuplexMode::Simplex => command.arg("-dDuplex=false"),
+                DuplexMode::DuplexLongEdge => command.args(["-dDuplex=true", "-dTumble=false"]),
+                DuplexMode::DuplexShortEdge => command.args(["-dDuplex=true", "-dTumble=true"]),
+            };
+        }
+    }
+
+    command.args(["-f", input]);
 
     command.stdout(Stdio::piped());
     command.stderr(Stdio::piped());
