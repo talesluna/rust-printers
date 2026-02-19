@@ -118,8 +118,8 @@ pub enum PaperSize {
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ColorMode {
+    Gray,
     Color,
-    Monochrome,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -145,7 +145,7 @@ pub enum PrintQuality {
 #[derive(Clone, Debug, Default)]
 pub struct PrinterJobOptions {
     pub name: Option<String>,
-    pub scale: Option<i16>,
+    pub scale: Option<f32>,
     pub copies: Option<i16>,
     pub duplex: Option<DuplexMode>,
     pub collate: Option<bool>,
@@ -193,21 +193,21 @@ impl PrinterJobOptions {
         self
     }
 
-    pub fn paper_size_mm(mut self, w: i32, h: i32) -> Self {
+    pub fn paper_size_mm(mut self, width: i32, height: i32) -> Self {
         assert!(self.paper_size.is_none(), "paper_size duplicated");
-        self.paper_size = Some(PaperSize::Custom(w, h, "mm", 1));
+        self.paper_size = Some(PaperSize::Custom(width, height, "mm", 1));
         self
     }
 
-    pub fn paper_size_cm(mut self, w: i32, h: i32) -> Self {
+    pub fn paper_size_cm(mut self, width: i32, height: i32) -> Self {
         assert!(self.paper_size.is_none(), "paper_size duplicated");
-        self.paper_size = Some(PaperSize::Custom(w, h, "cm", 100));
+        self.paper_size = Some(PaperSize::Custom(width, height, "cm", 100));
         self
     }
 
-    pub fn paper_size_mt(mut self, w: i32, h: i32) -> Self {
+    pub fn paper_size_mt(mut self, width: i32, height: i32) -> Self {
         assert!(self.paper_size.is_none(), "paper_size duplicated");
-        self.paper_size = Some(PaperSize::Custom(w, h, "mt", 1000));
+        self.paper_size = Some(PaperSize::Custom(width, height, "mt", 1000));
         self
     }
 
@@ -217,9 +217,9 @@ impl PrinterJobOptions {
         self
     }
 
-    pub fn monochrome(mut self) -> Self {
+    pub fn grayscale(mut self) -> Self {
         assert!(self.color_mode.is_none(), "color_mode duplicated");
-        self.color_mode = Some(ColorMode::Monochrome);
+        self.color_mode = Some(ColorMode::Gray);
         self
     }
 
@@ -276,8 +276,7 @@ impl PrinterJobOptions {
         self
     }
 
-    pub fn scale(mut self, scale: i16) -> Self {
-        assert!((1..=100).contains(&scale), "scale must between 1 and 100");
+    pub fn scale(mut self, scale: f32) -> Self {
         self.scale = Some(scale);
         self
     }

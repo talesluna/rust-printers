@@ -262,19 +262,18 @@ fn generate_options(options: &PrinterJobOptions) -> OptionsCollection<CString, C
             (
                 "media",
                 options.paper_size.map(|v| match v {
-                    PaperSize::A4 => "a4".into(),
-                    PaperSize::Legal => "legal".into(),
-                    PaperSize::Letter => "letter".into(),
                     PaperSize::Custom(width, height, unit, _) => {
-                        format!("Custom.{width}x{height}{unit}")
-                    }
+                        let sizes = if options.orientation == Some(Orientation::Landscape) { (height, width) } else { (width, height) };
+                        format!("Custom.{}x{}{unit}", sizes.0, sizes.1)
+                    },
+                    other => other.to_string().to_lowercase(),
                 }),
             ),
             (
                 "print-color-mode",
                 options.color_mode.map(|v| match v {
                     ColorMode::Color => "color".into(),
-                    ColorMode::Monochrome => "monochrome".into(),
+                    ColorMode::Gray => "monochrome".into(),
                 }),
             ),
             (

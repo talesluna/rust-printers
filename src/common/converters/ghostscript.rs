@@ -1,5 +1,5 @@
 use crate::common::base::errors::PrintersError;
-use crate::common::base::job::PrinterJobOptions;
+use crate::common::base::job::{ColorMode, PrinterJobOptions};
 use std::io::Write;
 use std::process::{Command, Stdio};
 
@@ -7,16 +7,27 @@ use std::process::{Command, Stdio};
 pub struct GhostscriptConverter {
     device: &'static str,
     command: &'static str,
+    apply_job_options: bool,
+    device_gray: Option<&'static str>,
 }
 
 impl Default for GhostscriptConverter {
     fn default() -> Self {
+        #[cfg(target_family = "windows")] {
+            return Self {
+                device: "ps2write",
+                command: "gswin64c.exe",
+                device_gray: None,
+                // WINDOWS TRUE BY DEFAULT - AUTOMATE OPTIONS WHEN GHOSTSCRIPT AVAILABLE
+                apply_job_options: true,
+            };
+        }
+
         Self {
-            device: "ps2write",
-            #[cfg(target_family = "unix")]
+            device: "pdfwrite",
             command: "gs",
-            #[cfg(target_family = "windows")]
-            command: "gswin64c.exe",
+            device_gray: None,
+            apply_job_options: false,
         }
     }
 }
@@ -32,32 +43,34 @@ impl GhostscriptConverter {
         self
     }
 
-    pub fn ps2write(mut self) -> Self {
+    pub fn apply_job_options(mut self, apply: bool) -> Self {
+        self.apply_job_options = apply;
+        self
+    }
+
+    pub fn to_postscript(mut self) -> Self {
         self.device = "ps2write";
         self
     }
 
-    pub fn png16m(mut self) -> Self {
+    pub fn to_png(mut self) -> Self {
         self.device = "png16m";
+        self.device_gray = Some("pnggray");
         self
     }
 
-    pub fn jpeg(mut self) -> Self {
+    pub fn to_jpeg(mut self) -> Self {
         self.device = "jpeg";
         self
     }
 
-    pub fn bmp16m(mut self) -> Self {
+    pub fn to_bitmap(mut self) -> Self {
         self.device = "bmp16m";
+        self.device_gray = Some("bmpgray");
         self
     }
 
-    pub fn pngmono(mut self) -> Self {
-        self.device = "pngmono";
-        self
-    }
-
-    pub fn pdfwrite(mut self) -> Self {
+    pub fn to_pdf(mut self) -> Self {
         self.device = "pdfwrite";
         self
     }
@@ -76,8 +89,18 @@ fn run(
     options: &GhostscriptConverter,
     input: &str,
     stdin: Option<Vec<u8>>,
-    _job_options: &PrinterJobOptions,
+    job_options: &PrinterJobOptions,
 ) -> Result<Vec<u8>, PrintersError> {
+
+    let device = if options.apply_job_options
+        && job_options.color_mode == Some(ColorMode::Gray)
+        && let Some(device_gray) = options.device_gray
+    {
+        device_gray
+    } else {
+        options.device
+    };
+
     let mut command = Command::new(options.command);
 
     command.args([
@@ -85,15 +108,17 @@ fn run(
         "-dSAFER",
         "-dBATCH",
         "-dNOPAUSE",
-        format!("-sDEVICE={}", options.device).as_str(),
+        format!("-sDEVICE={}", device).as_str(),
         "-sOutputFile=%stdout",
     ]);
 
-    // WINDOWS ONLY - AUTOMATE OPTIONS WHEN GHOSTSCRIPT AVAILABLE
-    #[cfg(target_family = "windows")]
-    command.args(_job_options_into_gs_options(_job_options));
+    if options.apply_job_options {
+        command.args(job_options_into_gs_options(job_options));
+    }
 
     command.args(["-f", input]);
+
+    println!("{}", format!("{:?}", command).replace("\"", ""));
 
     command.stdout(Stdio::piped());
     command.stderr(Stdio::piped());
@@ -126,14 +151,14 @@ fn run(
     }
 }
 
-pub fn _job_options_into_gs_options(job_options: &PrinterJobOptions) -> Vec<String> {
+pub fn job_options_into_gs_options(job_options: &PrinterJobOptions) -> Vec<String> {
     use crate::common::base::job::{ColorMode, DuplexMode, Orientation, PaperSize, PrintQuality};
 
     let mut gs_options: Vec<String> = Vec::new();
 
     let landscape = job_options.orientation == Some(Orientation::Landscape);
 
-    if job_options.color_mode == Some(ColorMode::Monochrome) {
+    if job_options.color_mode == Some(ColorMode::Gray) {
         gs_options.push("-dProcessColorModel=/DeviceGray".into());
         gs_options.push("-dColorConversionStrategy=/Gray".into());
     }
@@ -142,9 +167,9 @@ pub fn _job_options_into_gs_options(job_options: &PrinterJobOptions) -> Vec<Stri
         gs_options.push(format!(
             "-r{}",
             match quality {
-                PrintQuality::High => 600,
-                PrintQuality::Draft => 150,
-                PrintQuality::Normal => 300,
+                PrintQuality::High => 800,
+                PrintQuality::Draft => 200,
+                PrintQuality::Normal => 400,
             }
         ));
     }
@@ -173,17 +198,11 @@ pub fn _job_options_into_gs_options(job_options: &PrinterJobOptions) -> Vec<Stri
                 gs_options.push(format!("-dDEVICEHEIGHTPOINTS={}", points.1));
             }
         }
-        gs_options.push("-dPDFFitPage".into());
+
     }
 
     if let Some(collate) = job_options.collate {
         gs_options.push(format!("-dCollate={collate}"));
-    }
-
-    if let Some(scale) = job_options.scale
-        && scale > 0
-    {
-        gs_options.push(format!("-dScale={:.2}", scale / 100));
     }
 
     if let Some(duplex_mode) = job_options.duplex {
@@ -197,6 +216,10 @@ pub fn _job_options_into_gs_options(job_options: &PrinterJobOptions) -> Vec<Stri
                 ));
             }
         };
+    }
+
+    if landscape {
+        gs_options.push("-c \"<</Orientation 3>> setpagedevice\"".into());
     }
 
     gs_options
