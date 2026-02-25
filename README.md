@@ -13,18 +13,60 @@ See the references in [docs.rs](https://docs.rs/printers).
 
 ## 🛠️ Features
 
-| Feature | Status |
-| :--- | :---: |
-| List available printers | ✅ |
-| List printer jobs | ✅ |
-| Manage printer jobs (pause, resume, cancel, restart) | ✅ |
-| Print plain text | ✅ |
-| Print PDF, images etc... (*1)| ✅ |
-| Converters (Ghostscript) | ✅ |
-| DOCx / XLS / PPTx converter | ⏳ |
-| Converter pipeline (doc -> pdf -> ps) | ⏳ |
+| Feature                                                | Status |
+| :----------------------------------------------------- | :----: |
+| List available printers                                | ✅     |
+| List printer jobs                                      | ✅     |
+| Manage printer jobs (pause, resume, cancel, restart)   | ✅     |
+| Print plain text                                       | ✅     |
+| Print PDF, images etc... (*1)                          | ✅     |
+| Converters (Ghostscript)                               | ✅     |
+| DOCx / XLS / PPTx converter                            | ⏳     |
+| Converter pipeline (doc -> pdf -> ps)                  | ⏳     |
 
 > *1 If necessary, you can raster the file using converters supported by the lib, such as Ghostscript. See the examples below.
+
+## 🔄 Ghostscript Converter
+
+The Ghostscript converter allows you to raster or transform files (PDFs, PostScript, images) into different output formats before sending them to a printer. This is useful when a printer does not natively support a given file format, or when you need to control the output resolution and format.
+
+### How it works
+
+The converter spawns Ghostscript as a child process, pipes the file content via stdin, and reads the converted output from stdout. This means it works efficiently without creating temporary files on disk.
+
+### Supported output devices
+
+| Convenience method                                       | Ghostscript device | Description               |
+| :------------------------------------------------------- | :----------------- | :------------------------ |
+| `GhostscriptConverterOptions::ps2write()`                | `ps2write`         | PostScript output         |
+| `GhostscriptConverterOptions::png16m()`                  | `png16m`           | 24-bit color PNG          |
+| `GhostscriptConverterOptions::pngmono()`                 | `pngmono`          | Monochrome PNG            |
+| `GhostscriptConverterOptions::tiffg4()`                  | `tiffg4`           | TIFF G4 fax encoding      |
+| `GhostscriptConverterOptions::from_device("...")`        | any                | Custom Ghostscript device |
+
+You can also configure the output DPI (default: 500) and a custom path to the Ghostscript executable via `GhostscriptConverterOptions`.
+
+### Host dependency required
+
+The Ghostscript converter requires the Ghostscript executable to be installed on the host operating system. It is **not** bundled with this library. The library invokes `gs` on Unix (Linux/macOS) or `gswin64c.exe` on Windows as an external process. If Ghostscript is not installed or not in your PATH, the converter will return a `PrintersError`.
+
+**Installation by platform:**
+
+| Platform              | Install command                                                                                  | Executable used |
+| :-------------------- | :----------------------------------------------------------------------------------------------- | :-------------- |
+| Linux (Debian/Ubuntu) | `sudo apt-get install ghostscript`                                                               | `gs`            |
+| macOS                 | `brew install ghostscript`                                                                       | `gs`            |
+| Windows               | Install from [ghostscript.com](https://www.ghostscript.com/releases/gsdnld.html) and add to PATH | `gswin64c.exe`  |
+
+If Ghostscript is installed in a non-standard location, you can specify the path via the `command` option:
+
+```rust
+let options = GhostscriptConverterOptions {
+    command: Some("/usr/local/bin/gs"),
+    dpi: Some(300),
+    device: Some("ps2write"),
+};
+```
 
 ## 👇 Examples
 
