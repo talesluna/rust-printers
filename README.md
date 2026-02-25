@@ -21,7 +21,7 @@ See the references in [docs.rs](https://docs.rs/printers).
 | Print plain text                                       | ✅     |
 | Print PDF, images etc... (*1)                          | ✅     |
 | Converters (Ghostscript)                               | ✅     |
-| DOCx / XLS / PPTx converter                           | ⏳     |
+| DOCx / XLS / PPTx converter                            | ⏳     |
 | Converter pipeline (doc -> pdf -> ps)                  | ⏳     |
 
 > *1 If necessary, you can raster the file using converters supported by the lib, such as Ghostscript. See the examples below.
@@ -36,13 +36,13 @@ The converter spawns Ghostscript as a child process, pipes the file content via 
 
 ### Supported output devices
 
-| Convenience method                                      | Ghostscript device | Description              |
-| :------------------------------------------------------- | :----------------- | :----------------------- |
-| `GhostscriptConverterOptions::ps2write()`                | `ps2write`         | PostScript output        |
-| `GhostscriptConverterOptions::png16m()`                  | `png16m`           | 24-bit color PNG         |
-| `GhostscriptConverterOptions::pngmono()`                 | `pngmono`          | Monochrome PNG           |
-| `GhostscriptConverterOptions::tiffg4()`                  | `tiffg4`           | TIFF G4 fax encoding    |
-| `GhostscriptConverterOptions::from_device("...")`        | any                | Custom Ghostscript device|
+| Convenience method                                       | Ghostscript device | Description               |
+| :------------------------------------------------------- | :----------------- | :------------------------ |
+| `GhostscriptConverterOptions::ps2write()`                | `ps2write`         | PostScript output         |
+| `GhostscriptConverterOptions::png16m()`                  | `png16m`           | 24-bit color PNG          |
+| `GhostscriptConverterOptions::pngmono()`                 | `pngmono`          | Monochrome PNG            |
+| `GhostscriptConverterOptions::tiffg4()`                  | `tiffg4`           | TIFF G4 fax encoding      |
+| `GhostscriptConverterOptions::from_device("...")`        | any                | Custom Ghostscript device |
 
 You can also configure the output DPI (default: 500) and a custom path to the Ghostscript executable via `GhostscriptConverterOptions`.
 
@@ -52,11 +52,11 @@ The Ghostscript converter requires the Ghostscript executable to be installed on
 
 **Installation by platform:**
 
-| Platform             | Install command                                                                       | Executable used |
-| :------------------- | :------------------------------------------------------------------------------------ | :-------------- |
-| Linux (Debian/Ubuntu)| `sudo apt-get install ghostscript`                                                    | `gs`            |
-| macOS                | `brew install ghostscript`                                                            | `gs`            |
-| Windows              | Install from [ghostscript.com](https://www.ghostscript.com/releases/gsdnld.html) and add to PATH | `gswin64c.exe`  |
+| Platform              | Install command                                                                                  | Executable used |
+| :-------------------- | :----------------------------------------------------------------------------------------------- | :-------------- |
+| Linux (Debian/Ubuntu) | `sudo apt-get install ghostscript`                                                               | `gs`            |
+| macOS                 | `brew install ghostscript`                                                                       | `gs`            |
+| Windows               | Install from [ghostscript.com](https://www.ghostscript.com/releases/gsdnld.html) and add to PATH | `gswin64c.exe`  |
 
 If Ghostscript is installed in a non-standard location, you can specify the path via the `command` option:
 
