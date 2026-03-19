@@ -1,3 +1,4 @@
+pub mod devmode;
 pub mod errors;
 pub mod job;
 pub mod options;
