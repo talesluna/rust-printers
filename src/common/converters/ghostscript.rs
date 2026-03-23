@@ -24,6 +24,7 @@ pub fn direct_print_file(
     command.args([
         "-dBATCH",
         "-dNOPAUSE",
+        "-dNoCancel", // Case-sensitive. Hide the progress dialog
         "-sDEVICE=mswinpr2",
         &format!("-sOutputFile={output_file}"),
     ]);
