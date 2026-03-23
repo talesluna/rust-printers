@@ -30,6 +30,12 @@ impl PlatformActions for crate::Platform {
         buffer: &[u8],
         options: PrinterJobOptions,
     ) -> Result<u64, PrintersError> {
+        if options.converter.is_direct_print() {
+            return options
+                .converter
+                .direct_print_buffer(printer_system_name, buffer);
+        }
+
         let buffer = options.converter.convert(buffer)?;
         let buffer = &buffer.as_slice();
 
@@ -46,6 +52,12 @@ impl PlatformActions for crate::Platform {
         file_path: &str,
         options: PrinterJobOptions,
     ) -> Result<u64, PrintersError> {
+        if options.converter.is_direct_print() {
+            return options
+                .converter
+                .direct_print_file(printer_system_name, file_path);
+        }
+
         let buffer = file::get_file_as_bytes(file_path)?;
         Self::print(printer_system_name, &buffer, options)
     }

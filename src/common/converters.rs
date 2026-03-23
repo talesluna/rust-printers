@@ -42,6 +42,9 @@ impl GhostscriptConverterOptions {
     pub fn pngmono() -> Self {
         Self::from_device("pngmono")
     }
+    pub fn mswinpr2() -> Self {
+        Self::from_device("mswinpr2")
+    }
     pub fn from_device(device: &'static str) -> Self {
         Self {
             dpi: None,
@@ -69,6 +72,58 @@ impl Converter {
         match self {
             Converter::Ghostscript(options) => ghostscript::convert(buffer, options),
             Converter::None => Ok(buffer.to_vec()),
+        }
+    }
+
+    /**
+     * Returns true if this converter prints directly to the printer (e.g. mswinpr2)
+     * bypassing the winspool RAW data path.
+     */
+    pub fn is_direct_print(&self) -> bool {
+        matches!(
+            self,
+            Converter::Ghostscript(GhostscriptConverterOptions {
+                device: Some("mswinpr2"),
+                ..
+            })
+        )
+    }
+
+    /**
+     * Directly print a file to a printer using Ghostscript mswinpr2 device.
+     * This bypasses the winspool RAW path and renders via GDI.
+     */
+    pub fn direct_print_file(
+        &self,
+        printer_system_name: &str,
+        file_path: &str,
+    ) -> Result<u64, PrintersError> {
+        match self {
+            Converter::Ghostscript(options) if options.device == Some("mswinpr2") => {
+                ghostscript::direct_print_file(options, printer_system_name, file_path)
+            }
+            _ => Err(PrintersError::print_error(
+                "direct_print_file is only supported with mswinpr2 device",
+            )),
+        }
+    }
+
+    /**
+     * Directly print a byte buffer to a printer using Ghostscript mswinpr2 device.
+     * Writes the buffer to a temporary file and prints it.
+     */
+    pub fn direct_print_buffer(
+        &self,
+        printer_system_name: &str,
+        buffer: &[u8],
+    ) -> Result<u64, PrintersError> {
+        match self {
+            Converter::Ghostscript(options) if options.device == Some("mswinpr2") => {
+                ghostscript::direct_print_buffer(options, printer_system_name, buffer)
+            }
+            _ => Err(PrintersError::print_error(
+                "direct_print_buffer is only supported with mswinpr2 device",
+            )),
         }
     }
 }
