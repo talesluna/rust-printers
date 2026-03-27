@@ -29,9 +29,9 @@ pub fn direct_print_file(
         &format!("-sOutputFile={output_file}"),
     ]);
 
-    if let Some(dpi) = options.dpi {
-        command.arg(format!("-r{dpi}"));
-    }
+    // NOTE: mswinpr2 does NOT support -r for resolution control.
+    // Callers should pre-rasterize the input if DPI control is needed.
+    // See: https://ghostscript.readthedocs.io/en/latest/Devices.html#ms-windows-printers
 
     command.arg(file_path);
     command.stdout(Stdio::piped());
