@@ -40,7 +40,7 @@ pub struct PrinterJob {
     /**
      * Indicates the job file type, ex application/pdf
      */
-    pub media_type: String,
+    pub data_type: String,
     /**
      * Date when a job was created
      */
@@ -67,7 +67,7 @@ impl PrinterJob {
             id: platform_printer_job.get_id(),
             name: platform_printer_job.get_name(),
             state: PrinterJobState::from_platform_state(platform_printer_job.get_state()),
-            media_type: platform_printer_job.get_media_type(),
+            data_type: platform_printer_job.get_data_type(),
             created_at: platform_printer_job.get_created_at(),
             processed_at: platform_printer_job.get_processed_at(),
             completed_at: platform_printer_job.get_completed_at(),
@@ -84,7 +84,7 @@ impl Debug for PrinterJob {
                 \r  id: {:?},
                 \r  name: {:?},
                 \r  state: {:?},
-                \r  media_type: {:?},
+                \r  data_type: {:?},
                 \r  created_at: {:?},
                 \r  processed_at: {:?},
                 \r  completed_at: {:?},
@@ -93,7 +93,7 @@ impl Debug for PrinterJob {
             self.id,
             self.name,
             self.state,
-            self.media_type,
+            self.data_type,
             self.created_at,
             self.processed_at,
             self.completed_at,
@@ -113,7 +113,7 @@ pub enum PaperSize {
     A4,
     Letter,
     Legal,
-    Custom(i32, i32, &'static str, i32),
+    Custom { width_mm: f64, height_mm: f64 },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -155,6 +155,7 @@ pub struct PrinterJobOptions {
     pub color_mode: Option<ColorMode>,
     pub orientation: Option<Orientation>,
     pub converter: Option<Arc<dyn Converter>>,
+    pub reflect_in_converter: bool,
     printer_name: Option<String>,
 }
 
@@ -193,21 +194,30 @@ impl PrinterJobOptions {
         self
     }
 
-    pub fn paper_size_mm(mut self, width: i32, height: i32) -> Self {
+    pub fn paper_size_mm(mut self, width: f64, height: f64) -> Self {
         assert!(self.paper_size.is_none(), "paper_size duplicated");
-        self.paper_size = Some(PaperSize::Custom(width, height, "mm", 1));
+        self.paper_size = Some(PaperSize::Custom {
+            width_mm: width,
+            height_mm: height,
+        });
         self
     }
 
-    pub fn paper_size_cm(mut self, width: i32, height: i32) -> Self {
+    pub fn paper_size_cm(mut self, width: f64, height: f64) -> Self {
         assert!(self.paper_size.is_none(), "paper_size duplicated");
-        self.paper_size = Some(PaperSize::Custom(width, height, "cm", 100));
+        self.paper_size = Some(PaperSize::Custom {
+            width_mm: width * 10.0,
+            height_mm: height * 10.0,
+        });
         self
     }
 
-    pub fn paper_size_mt(mut self, width: i32, height: i32) -> Self {
+    pub fn paper_size_m(mut self, width: f64, height: f64) -> Self {
         assert!(self.paper_size.is_none(), "paper_size duplicated");
-        self.paper_size = Some(PaperSize::Custom(width, height, "mt", 1000));
+        self.paper_size = Some(PaperSize::Custom {
+            width_mm: width * 1000.0,
+            height_mm: height * 1000.0,
+        });
         self
     }
 
@@ -283,6 +293,11 @@ impl PrinterJobOptions {
 
     pub fn data_type(mut self, data_type: &'static str) -> Self {
         self.data_type = Some(data_type.into());
+        self
+    }
+
+    pub fn reflect_in_ghostscript(mut self) -> Self {
+        self.reflect_in_converter = true;
         self
     }
 

@@ -7,28 +7,24 @@ use std::process::{Command, Stdio};
 pub struct GhostscriptConverter {
     device: &'static str,
     command: &'static str,
-    apply_job_options: bool,
     device_gray: Option<&'static str>,
 }
 
 impl Default for GhostscriptConverter {
     fn default() -> Self {
-        #[cfg(target_family = "windows")] {
-            return Self {
-                device: "ps2write",
-                command: "gswin64c.exe",
-                device_gray: None,
-                // WINDOWS TRUE BY DEFAULT - AUTOMATE OPTIONS WHEN GHOSTSCRIPT AVAILABLE
-                apply_job_options: true,
-            };
-        }
+        #[cfg(target_family = "windows")]
+        return Self {
+            device: "ps2write",
+            command: "gswin64c.exe",
+            device_gray: None,
+        };
 
-        Self {
+        #[cfg(target_family = "unix")]
+        return Self {
             device: "pdfwrite",
             command: "gs",
             device_gray: None,
-            apply_job_options: false,
-        }
+        };
     }
 }
 
@@ -40,11 +36,6 @@ impl GhostscriptConverter {
 
     pub fn device(mut self, device: &'static str) -> Self {
         self.device = device;
-        self
-    }
-
-    pub fn apply_job_options(mut self, apply: bool) -> Self {
-        self.apply_job_options = apply;
         self
     }
 
@@ -74,6 +65,11 @@ impl GhostscriptConverter {
         self.device = "pdfwrite";
         self
     }
+
+    pub fn to_xps(mut self) -> Self {
+        self.device = "xpswrite";
+        self
+    }
 }
 
 pub fn convert(
@@ -91,8 +87,7 @@ fn run(
     stdin: Option<Vec<u8>>,
     job_options: &PrinterJobOptions,
 ) -> Result<Vec<u8>, PrintersError> {
-
-    let device = if options.apply_job_options
+    let device = if job_options.reflect_in_converter
         && job_options.color_mode == Some(ColorMode::Gray)
         && let Some(device_gray) = options.device_gray
     {
@@ -112,14 +107,11 @@ fn run(
         "-sOutputFile=%stdout",
     ]);
 
-    if options.apply_job_options {
+    if job_options.reflect_in_converter {
         command.args(job_options_into_gs_options(job_options));
     }
 
     command.args(["-f", input]);
-
-    println!("{}", format!("{:?}", command).replace("\"", ""));
-
     command.stdout(Stdio::piped());
     command.stderr(Stdio::piped());
 
@@ -158,47 +150,53 @@ pub fn job_options_into_gs_options(job_options: &PrinterJobOptions) -> Vec<Strin
 
     let landscape = job_options.orientation == Some(Orientation::Landscape);
 
+    gs_options.push("-dColorImageFilter=/FlateEncode".into());
+    gs_options.push("-dDownsampleColorImages=true".into());
+    gs_options.push("-dOverrideICC".into());
+
     if job_options.color_mode == Some(ColorMode::Gray) {
         gs_options.push("-dProcessColorModel=/DeviceGray".into());
         gs_options.push("-dColorConversionStrategy=/Gray".into());
     }
 
     if let Some(quality) = job_options.quality {
-        gs_options.push(format!(
-            "-r{}",
-            match quality {
-                PrintQuality::High => 800,
-                PrintQuality::Draft => 200,
-                PrintQuality::Normal => 400,
-            }
-        ));
+        let quality = match quality {
+            PrintQuality::High => 900,
+            PrintQuality::Draft => 300,
+            PrintQuality::Normal => 600,
+        };
+        gs_options.push(format!("-r{}", quality));
+        gs_options.push(format!("-dColorImageResolution={}", quality));
     }
 
     if let Some(paper_size) = job_options.paper_size {
-        let points = match paper_size {
-            PaperSize::Custom(w, h, _, multi) => {
-                let w = (((w * multi) as f64 * 72.0) / 25.4).round() as i32;
-                let h = (((h * multi) as f64 * 72.0) / 25.4).round() as i32;
-                if landscape { (h, w) } else { (w, h) }
+        match paper_size {
+            PaperSize::Custom {
+                width_mm,
+                height_mm,
+            } => {
+                let width = ((width_mm * 72.0) / 25.4).round() as i32;
+                let height = ((height_mm * 72.0) / 25.4).round() as i32;
+
+                gs_options.push("-dFIXEDMEDIA".into());
+                gs_options.push(format!("-dDEVICEWIDTHPOINTS={}", width));
+                gs_options.push(format!("-dDEVICEHEIGHTPOINTS={}", height));
+
+                if landscape {
+                    gs_options.push("-c".into());
+                    gs_options.push(format!(
+                        "<< /BeginPage {{ 90 rotate 0 -{} translate }} >> setpagedevice",
+                        width
+                    ));
+                }
             }
-            _ => (0, 0),
+            _ => {
+                gs_options.push(format!(
+                    "-sPAPERSIZE={}",
+                    paper_size.to_string().to_lowercase()
+                ));
+            }
         };
-
-        if points.0 == 0 && points.1 == 0 {
-            gs_options.push(format!(
-                "-sPAPERSIZE={}{}",
-                paper_size.to_string().to_lowercase(),
-                if landscape { "rotated" } else { "" }
-            ));
-        } else {
-            if points.0 > 0 {
-                gs_options.push(format!("-dDEVICEWIDTHPOINTS={}", points.0));
-            }
-            if points.1 > 0 {
-                gs_options.push(format!("-dDEVICEHEIGHTPOINTS={}", points.1));
-            }
-        }
-
     }
 
     if let Some(collate) = job_options.collate {
@@ -218,8 +216,10 @@ pub fn job_options_into_gs_options(job_options: &PrinterJobOptions) -> Vec<Strin
         };
     }
 
-    if landscape {
-        gs_options.push("-c \"<</Orientation 3>> setpagedevice\"".into());
+    if landscape && !gs_options.contains(&"-dFIXEDMEDIA".into()) {
+        gs_options.push("-dAutoRotatePages=/None".into());
+        gs_options.push("-c".into());
+        gs_options.push("<</Orientation 3>> setpagedevice".into());
     }
 
     gs_options

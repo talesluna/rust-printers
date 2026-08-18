@@ -111,7 +111,7 @@ impl PlatformPrinterJobGetters for CupsJobsS {
         c_char_to_string(self.dest)
     }
 
-    fn get_media_type(&self) -> String {
+    fn get_data_type(&self) -> String {
         c_char_to_string(self.format)
     }
 
@@ -250,22 +250,32 @@ fn do_request(printer_name: &str, job_id: i32, op: i32) -> Result<(), PrintersEr
 }
 
 fn generate_options(options: &PrinterJobOptions) -> OptionsCollection<CString, CupsOptionT> {
-    OptionsCollection::new(
-        vec![
-            ("copies", options.copies.map(|v| v.to_string())),
-            ("collate", options.collate.map(|v| v.to_string())),
-            ("scaling", options.scale.map(|v| v.to_string())),
-            (
-                "document-format",
-                options.data_type.as_deref().map(|v| v.to_string()),
-            ),
+    let mut opts = vec![
+        ("copies", options.copies.map(|v| v.to_string())),
+        ("collate", options.collate.map(|v| v.to_string())),
+        ("scaling", options.scale.map(|v| v.to_string())),
+        (
+            "document-format",
+            options.data_type.as_deref().map(|v| v.to_string()),
+        ),
+    ];
+
+    if !options.reflect_in_converter {
+        opts.extend_from_slice(&vec![
             (
                 "media",
                 options.paper_size.map(|v| match v {
-                    PaperSize::Custom(width, height, unit, _) => {
-                        let sizes = if options.orientation == Some(Orientation::Landscape) { (height, width) } else { (width, height) };
-                        format!("Custom.{}x{}{unit}", sizes.0, sizes.1)
-                    },
+                    PaperSize::Custom {
+                        width_mm,
+                        height_mm,
+                    } => {
+                        let sizes = if options.orientation == Some(Orientation::Landscape) {
+                            (height_mm, width_mm)
+                        } else {
+                            (width_mm, height_mm)
+                        };
+                        format!("Custom.{}x{}mm", sizes.0, sizes.1)
+                    }
                     other => other.to_string().to_lowercase(),
                 }),
             ),
@@ -299,12 +309,15 @@ fn generate_options(options: &PrinterJobOptions) -> OptionsCollection<CString, C
                     PrintQuality::Normal => "4".into(),
                 }),
             ),
-        ]
-        .iter()
-        .filter(|(_, value)| value.is_some())
-        .map(|(k, v)| (*k, v.clone().unwrap().to_string()))
-        .collect::<Vec<(&str, String)>>()
-        .as_slice(),
+        ]);
+    }
+
+    OptionsCollection::new(
+        opts.iter()
+            .filter(|(_, value)| value.is_some())
+            .map(|(k, v)| (*k, v.clone().unwrap().to_string()))
+            .collect::<Vec<(&str, String)>>()
+            .as_slice(),
         |(key, value)| {
             let key = str_to_cstring(*key);
             let value = str_to_cstring(value.as_str());

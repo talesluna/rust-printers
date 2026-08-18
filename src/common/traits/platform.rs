@@ -26,7 +26,7 @@ pub trait PlatformPrinterJobGetters {
     fn get_name(&self) -> String;
     fn get_state(&self) -> u64;
     fn get_printer(&self) -> String;
-    fn get_media_type(&self) -> String;
+    fn get_data_type(&self) -> String;
     fn get_created_at(&self) -> SystemTime;
     fn get_processed_at(&self) -> Option<SystemTime>;
     fn get_completed_at(&self) -> Option<SystemTime>;
